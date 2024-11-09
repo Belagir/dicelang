@@ -1,4 +1,4 @@
-@startuml token_identification
+@startuml lexical_analysis_of_deicelang
 
 [*] --> token
 

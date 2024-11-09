@@ -1,4 +1,4 @@
-@startuml lexical_identification
+@startuml parsing_of_dicelang
 
 state start_state <<fork>>
 [*] --> start_state
