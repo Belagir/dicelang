@@ -8,26 +8,27 @@
 #include <ustd/range.h>
 
 enum dicelang_token_flavour {
-    DICELANG_TOKEN_invalid,
+    DTOK_invalid,
+    DTOK_empty,
 
-    DICELANG_TOKEN_line_end,
-    DICELANG_TOKEN_file_end,
-    DICELANG_TOKEN_identifier,
-    DICELANG_TOKEN_value,
-    DICELANG_TOKEN_value_real,
-    DICELANG_TOKEN_separator,
-    DICELANG_TOKEN_addition,
-    DICELANG_TOKEN_substraction,
-    DICELANG_TOKEN_d,
-    DICELANG_TOKEN_designator,
-    DICELANG_TOKEN_open_parenthesis,
-    DICELANG_TOKEN_close_parenthesis,
-    DICELANG_TOKEN_open_bracket,
-    DICELANG_TOKEN_close_bracket,
-    DICELANG_TOKEN_open_sq_bracket,
-    DICELANG_TOKEN_close_sq_bracket,
+    DTOK_line_end,
+    DTOK_file_end,
+    DTOK_identifier,
+    DTOK_value,
+    DTOK_value_real,
+    DTOK_separator,
+    DTOK_addition,
+    DTOK_substraction,
+    DTOK_d,
+    DTOK_designator,
+    DTOK_open_parenthesis,
+    DTOK_close_parenthesis,
+    DTOK_open_bracket,
+    DTOK_close_bracket,
+    DTOK_open_sq_bracket,
+    DTOK_close_sq_bracket,
 
-    DICELANG_TOKEN_NUMBER,
+    DTOK_NUMBER,
 };
 
 struct dicelang_token {
