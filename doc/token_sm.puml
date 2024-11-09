@@ -1,0 +1,59 @@
+@startuml token_identification
+
+[*] --> token
+
+token -up-> line_end : '\\n'
+
+token -up-> file_end : 'EOF'
+file_end -down-> [*]
+
+token --> identifier : '[a-Z]'
+identifier --> identifier : '[a-Z0-9_]'
+
+token --> value : '[0-9]'
+value --> value : '[0-9]'
+
+value --> value_real : '.'
+token --> value_real : '.'
+value_real --> value_real : [0-9]
+
+token --> separator : ','
+
+state binary_operand {
+	[*] --> addition : '+'
+	addition --> [*]
+	||
+	[*] --> substraction : '-'
+	substraction --> [*]
+}
+
+token -right-> binary_operand : '+ - * / > < = >= <= != and or'
+
+state unary_operand {
+	[*] --> dice : 'd'
+	dice --> [*]
+}
+
+token --> unary_operand : 'd not'
+
+token --> designator : ':'
+
+state paired_token {
+	[*] --> open_sq_bracket : '['
+	open_sq_bracket --> [*]
+	[*] --> close_sq_bracket : ']'
+	close_sq_bracket --> [*]
+	--
+	[*] --> open_parenthesis : '('
+	open_parenthesis --> [*]
+	[*] --> close_parenthesis : ')'
+	close_parenthesis --> [*]
+	--
+	[*] --> open_bracket : '{'
+	open_bracket --> [*]
+	[*] --> close_bracket : '}'
+	close_bracket --> [*]
+}
+token --> paired_token : '[ ] ( ) { }'
+
+@enduml

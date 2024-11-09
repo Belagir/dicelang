@@ -1,0 +1,28 @@
+@startuml lexical_identification
+
+state start_state <<fork>>
+[*] --> start_state
+
+start_state --> FUNCTION_CALL : identifier open_parenthesis EXPRESSION_SET close_parenthesis
+start_state --> MUTATION_CALL : identifier open_bracket EXPRESSION_SET close_bracket
+
+start_state --> VARIABLE : identifier
+
+start_state --> ARRAY : open_sq_bracket EXPRESSION_SET close_sq_bracket
+start_state --> ARRAY_ACCESS : VARIABLE open_sq_bracket value close_sq_bracket
+
+start_state --> EXPRESSION
+
+EXPRESSION --> EXPRESSION : unary_operand EXPRESSION
+EXPRESSION --> EXPRESSION : EXPRESSION binary_operand EXPRESSION
+EXPRESSION --> EXPRESSION : open_parenthesis EXPRESSION close_parenthesis
+
+EXPRESSION --> [*] :  value | value_real | VARIABLE | ARRAY | ARRAY_ACCESS
+EXPRESSION --> [*] : FUNCTION_CALL | MUTATION_CALL
+
+start_state --> EXPRESSION_SET : EXPRESSION
+EXPRESSION_SET --> EXPRESSION_SET : EXPRESSION_SET separator EXPRESSION
+
+start_state --> assignment : VARIABLE designator EXPRESSION
+
+@enduml

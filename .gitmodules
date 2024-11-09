@@ -1,0 +1,3 @@
+[submodule "unstandard"]
+	path = unstandard
+	url = git@github.com:Belagir/unstandard.git
