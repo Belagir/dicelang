@@ -1,12 +1,20 @@
-
+/**
+ * @file lexer.c
+ * @author gabriel
+ * @brief Dicelang lexer implementation file.
+ * @version 0.1
+ * @date 2024-11-10
+ *
+ * @copyright Copyright (c) 2024
+ *
+ */
 #include <lexer.h>
 
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------
 
 /**
- * @brief
- *
+ * @brief Maps token flavours to some text representing each of them.
  */
 static const char *DTOK_names[] = {
         [DTOK_invalid]            = "invalid",
@@ -20,7 +28,7 @@ static const char *DTOK_names[] = {
         [DTOK_separator]          = "separator",
         [DTOK_addition]           = "addition",
         [DTOK_substraction]       = "substraction",
-        [DTOK_d]                  = "d",
+        [DTOK_d]                  = "_d",
         [DTOK_designator]         = "designator",
         [DTOK_open_parenthesis]   = "open parenthesis",
         [DTOK_close_parenthesis]  = "close parenthesis",
@@ -33,20 +41,23 @@ static const char *DTOK_names[] = {
 // -------------------------------------------------------------------------------------------------
 
 /**
- * @brief
+ * @brief Data representing some partial transition. Used to map a token flavour to some other token flavour in a transition array.
  *
+ * @see dicelang_transitions
  */
 struct dicelang_token_transition {
     enum dicelang_token_flavour to;
     bool is_endpoint;
 };
 
+/// Trap transition. Must translate to a zeroed-out transition !
 #define dicelang_token_no_transition (struct dicelang_token_transition) { .to = DTOK_invalid, .is_endpoint = false }
+/// Empty transition. Used as a starting point before parsing a token.
 #define dicelang_token_empty_transition (struct dicelang_token_transition) { .to = DTOK_empty, .is_endpoint = false }
 
 /**
- * @brief
- *
+ * @brief Map from a character, to a token flavour, to a transition to another token flavour.
+ * Accessing [c][tok] will give a transition to the valid token that the language knows of. If there is none, a dicelang_token_no_transition is given.
  */
 static const struct dicelang_token_transition dicelang_transitions[256][DTOK_NUMBER] = {
         ['\n']  = { [DTOK_empty] = { DTOK_line_end, true },   [DTOK_line_end] = { DTOK_line_end, true } },
@@ -121,17 +132,22 @@ static const struct dicelang_token_transition dicelang_transitions[256][DTOK_NUM
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------
 
+// Outputs one token information to a file.
 static void dicelang_print_token(struct dicelang_token token, FILE *to_file);
+// Reads one token from a string and consumes the characters read.
 static struct dicelang_token dicelang_token_read(const char **text, u32 line, u32 col);
 
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------
 
 /**
- * @brief
+ * @brief Creates an array of tokens from a script in an ascii string.
+ * The array will contain the different tokens encoded in the string in the order they were encountered, and ends either with a newline token), end of file token, or an invalid token.
  *
- * @param source_code
- * @param alloc
+ * @attention The returned array is allocated and its memory should be managed.
+ *
+ * @param[in] source_code Script to translate into tokens. If NULL, the array retiurned is also NULL.
+ * @param[in] alloc Allocator used to create the token range.
  * @return RANGE_TOKEN*
  */
 RANGE_TOKEN *dicelang_tokenize(const char *source_code, struct allocator alloc)
@@ -148,19 +164,23 @@ RANGE_TOKEN *dicelang_tokenize(const char *source_code, struct allocator alloc)
     read_tokens = range_create_dynamic(alloc, sizeof(*read_tokens->data), 512u);
 
     while ((*source_code != '\0') && (tok.flavour != DTOK_invalid)) {
-        while (*source_code == ' ') {
+        // skipping whitespaces
+        while ((*source_code == ' ') || (*source_code == '\t')) {
             source_code += 1;
             col += 1;
         }
 
+        // one token read at a time
         tok = dicelang_token_read(&source_code, line, col);
 
+        // updating the line / column pair
         if (tok.flavour == DTOK_line_end) {
             line += tok.value.source_length;
         } else {
             col += tok.value.source_length;
         }
 
+        // adding the token in the range
         read_tokens = range_ensure_capacity(alloc, RANGE_TO_ANY(read_tokens), 1u);
         range_push(RANGE_TO_ANY(read_tokens), &tok);
     }
@@ -169,10 +189,11 @@ RANGE_TOKEN *dicelang_tokenize(const char *source_code, struct allocator alloc)
 }
 
 /**
- * @brief
+ * @brief Prints a range of token to a file.
+ * For debug purposes.
  *
- * @param tokens
- * @param to_file
+ * @param[in] tokens
+ * @param[in] to_file
  */
 void dicelang_token_dump(RANGE_TOKEN *tokens, FILE *to_file)
 {
@@ -189,10 +210,10 @@ void dicelang_token_dump(RANGE_TOKEN *tokens, FILE *to_file)
 // -------------------------------------------------------------------------------------------------
 
 /**
- * @brief
+ * @brief Prints one token to a file;
  *
- * @param token
- * @param to_file
+ * @param[in] token
+ * @param[in] to_file
  */
 static void dicelang_print_token(struct dicelang_token token, FILE *to_file)
 {
@@ -208,9 +229,11 @@ static void dicelang_print_token(struct dicelang_token token, FILE *to_file)
 }
 
 /**
- * @brief
+ * @brief Reads one token from a string, and consumes the character(s) representing this token.
  *
- * @param text
+ * @param[inout] text Actual script from which the token is read.
+ * @param[in] line Line we are at, very nicely, generously and fabulously provided by the caller.
+ * @param[in] col Column we are at, very nicely, generously and fabulously provided by the caller.
  * @return struct DTOK
  */
 static struct dicelang_token dicelang_token_read(const char **text, u32 line, u32 col)
@@ -224,15 +247,20 @@ static struct dicelang_token dicelang_token_read(const char **text, u32 line, u3
     }
 
     do {
+        // fetching the eventual transition
         next_transition = dicelang_transitions[**text][current_transition.to];
 
+        // no transition exists, we are either at the end of a valid token (.is_endpoint is set) or a syntax error occurred.
         if (next_transition.to == DTOK_invalid) {
             break;
         }
+
+        // happy path, we advance through the token
         *text += 1;
         current_transition = next_transition;
     } while (**text != '\0');
 
+    // actual token is valid !
     if (current_transition.is_endpoint) {
         return (struct dicelang_token) {
                 .flavour = current_transition.to,
@@ -241,5 +269,6 @@ static struct dicelang_token dicelang_token_read(const char **text, u32 line, u3
         };
     }
 
+    // synatx error....
     return (struct dicelang_token) { .flavour = DTOK_invalid, .where = { line, col } };
 }
