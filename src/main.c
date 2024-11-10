@@ -4,13 +4,16 @@
 
 static const char test_code[] =
         "R\n"
-        "VARIABLE\n"
+        "#comment\n"
+        "    # other comment\n"
+        "# comment 1\n"
+        "# comment 2\n"
+        "VARIABLE # other other comment\n"
         "W42\n"
         "SOME_VAR_78 SOME OTHER VARS\n"
         "\n"
         "X\n"
-        "42\n"
-        "Y";
+        "Y # comment again";
 
 int main(int argc, const char *argv[])
 {

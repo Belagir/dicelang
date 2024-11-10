@@ -60,6 +60,7 @@ struct dicelang_token_transition {
  * Accessing [c][tok] will give a transition to the valid token that the language knows of. If there is none, a dicelang_token_no_transition is given.
  */
 static const struct dicelang_token_transition dicelang_transitions[256][DTOK_NUMBER] = {
+        ['\0']  = { [DTOK_empty] = { DTOK_file_end, true } },
         ['\n']  = { [DTOK_empty] = { DTOK_line_end, true },   [DTOK_line_end] = { DTOK_line_end, true } },
 
         ['a']   = { [DTOK_empty] = { DTOK_identifier, true }, [DTOK_identifier] = { DTOK_identifier, true } },
@@ -154,8 +155,8 @@ RANGE_TOKEN *dicelang_tokenize(const char *source_code, struct allocator alloc)
 {
     RANGE_TOKEN *read_tokens = nullptr;
     struct dicelang_token tok = { .flavour = DTOK_empty };
-    u32 line = 0u;
-    u32 col = 0u;
+    u32 line = 1u;
+    u32 col = 1u;
 
     if (!source_code) {
         return nullptr;
@@ -164,10 +165,19 @@ RANGE_TOKEN *dicelang_tokenize(const char *source_code, struct allocator alloc)
     read_tokens = range_create_dynamic(alloc, sizeof(*read_tokens->data), 512u);
 
     while ((*source_code != '\0') && (tok.flavour != DTOK_invalid)) {
-        // skipping whitespaces
-        while ((*source_code == ' ') || (*source_code == '\t')) {
-            source_code += 1;
-            col += 1;
+        // skipping whitespaces & comments
+        while ((*source_code == ' ') || (*source_code == '\t') || (*source_code == '#')) {
+            // whitespaces until some other char
+            if ((*source_code == ' ') || (*source_code == '\t')) {
+                source_code += 1;
+                col += 1;
+            }
+            // comments until end of line
+            if (*source_code == '#') {
+                while (*source_code && (*source_code != '\n')) {
+                    source_code += 1;
+                }
+            }
         }
 
         // one token read at a time
@@ -175,6 +185,7 @@ RANGE_TOKEN *dicelang_tokenize(const char *source_code, struct allocator alloc)
 
         // updating the line / column pair
         if (tok.flavour == DTOK_line_end) {
+            col = 1;
             line += tok.value.source_length;
         } else {
             col += tok.value.source_length;
