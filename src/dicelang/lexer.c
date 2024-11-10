@@ -41,6 +41,7 @@ struct dicelang_token_transition {
     bool is_endpoint;
 };
 
+#define dicelang_token_no_transition (struct dicelang_token_transition) { .to = DTOK_invalid, .is_endpoint = false }
 #define dicelang_token_empty_transition (struct dicelang_token_transition) { .to = DTOK_empty, .is_endpoint = false }
 
 /**
@@ -121,7 +122,7 @@ static const struct dicelang_token_transition dicelang_transitions[256][DTOK_NUM
 // -------------------------------------------------------------------------------------------------
 
 static void dicelang_print_token(struct dicelang_token token, FILE *to_file);
-static struct dicelang_token dicelang_token_read(const char **text);
+static struct dicelang_token dicelang_token_read(const char **text, u32 line, u32 col);
 
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------
@@ -136,7 +137,9 @@ static struct dicelang_token dicelang_token_read(const char **text);
 RANGE_TOKEN *dicelang_tokenize(const char *source_code, struct allocator alloc)
 {
     RANGE_TOKEN *read_tokens = nullptr;
-    struct dicelang_token tok = { 0u };
+    struct dicelang_token tok = { .flavour = DTOK_empty };
+    u32 line = 0u;
+    u32 col = 0u;
 
     if (!source_code) {
         return nullptr;
@@ -144,9 +147,22 @@ RANGE_TOKEN *dicelang_tokenize(const char *source_code, struct allocator alloc)
 
     read_tokens = range_create_dynamic(alloc, sizeof(*read_tokens->data), 512u);
 
-    while (*source_code != '\0') {
-        tok = dicelang_token_read(&source_code);
-        dicelang_print_token(tok, stdout);
+    while ((*source_code != '\0') && (tok.flavour != DTOK_invalid)) {
+        while (*source_code == ' ') {
+            source_code += 1;
+            col += 1;
+        }
+
+        tok = dicelang_token_read(&source_code, line, col);
+
+        if (tok.flavour == DTOK_line_end) {
+            line += tok.value.source_length;
+        } else {
+            col += tok.value.source_length;
+        }
+
+        read_tokens = range_ensure_capacity(alloc, RANGE_TO_ANY(read_tokens), 1u);
+        range_push(RANGE_TO_ANY(read_tokens), &tok);
     }
 
     return read_tokens;
@@ -197,26 +213,33 @@ static void dicelang_print_token(struct dicelang_token token, FILE *to_file)
  * @param text
  * @return struct DTOK
  */
-static struct dicelang_token dicelang_token_read(const char **text)
+static struct dicelang_token dicelang_token_read(const char **text, u32 line, u32 col)
 {
-    enum dicelang_token_flavour current_token = DTOK_empty;
     struct dicelang_token_transition current_transition = dicelang_token_empty_transition;
+    struct dicelang_token_transition next_transition = dicelang_token_no_transition;
     const char *value = *text;
 
     if(!text || !*text) {
-        return (struct dicelang_token) { .flavour = DTOK_invalid };
+        return (struct dicelang_token) { .flavour = DTOK_invalid, .where = { line, col } };
     }
 
     do {
-        current_transition = dicelang_transitions[**text][current_token];
+        next_transition = dicelang_transitions[**text][current_transition.to];
 
-        if (current_transition.to == DTOK_invalid) {
+        if (next_transition.to == DTOK_invalid) {
             break;
         }
-
         *text += 1;
-        current_token = current_transition.to;
+        current_transition = next_transition;
     } while (**text != '\0');
 
-    return (struct dicelang_token) { .flavour = current_token, .value = { value, (uintptr_t) *text - (uintptr_t) value }};
+    if (current_transition.is_endpoint) {
+        return (struct dicelang_token) {
+                .flavour = current_transition.to,
+                .value = { value, (uintptr_t) *text - (uintptr_t) value },
+                .where = { line, col }
+        };
+    }
+
+    return (struct dicelang_token) { .flavour = DTOK_invalid, .where = { line, col } };
 }

@@ -6,9 +6,11 @@ static const char test_code[] =
         "R\n"
         "VARIABLE\n"
         "W42\n"
-        "SOME_VAR_78\n"
+        "SOME_VAR_78 SOME OTHER VARS\n"
         "\n"
-        "X";
+        "X\n"
+        "42\n"
+        "Y";
 
 int main(int argc, const char *argv[])
 {
