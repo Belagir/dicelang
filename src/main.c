@@ -1,27 +1,17 @@
 
+#include <dicelang.h>
 #include <lexer.h>
 #include <stdio.h>
 
-static const char test_code[] =
-        "R : 8754\n"
-        "#comment\n"
-        "    # other comment\n"
-        "# comment 1\n"
-        "# comment 2\n"
-        "VARIABLE : 42 # other other comment\n"
-        "VARIABLE:R\n"
-        "W42\n"
-        "SOME_VAR_78 SOME OTHER VARS\n"
-        "\n"
-        "X\n"
-        "Y # comment again";
-
 int main(int argc, const char *argv[])
 {
-    RANGE_TOKEN *tokens = dicelang_tokenize(test_code, make_system_allocator());
-    dicelang_token_dump(tokens, stdout);
+    FILE *f = fopen("test_script.dicescript", "r");
+    struct dicelang_program program = dicelang_program_create_from_file(f, make_system_allocator());
+    fclose(f);
 
-    range_destroy_dynamic(make_system_allocator(), &RANGE_TO_ANY(tokens));
+    dicelang_token_dump(program.tokens, stdout);
+
+    dicelang_program_destroy(&program, make_system_allocator());
 
     return 0;
 }

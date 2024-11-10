@@ -266,7 +266,7 @@ RANGE_TOKEN *dicelang_tokenize(const char *source_code, struct allocator alloc)
 
     read_tokens = range_create_dynamic(alloc, sizeof(*read_tokens->data), 512u);
 
-    while ((*source_code != '\0') && (tok.flavour != DTOK_invalid)) {
+    while ((tok.flavour != DTOK_invalid) && (tok.flavour != DTOK_file_end)) {
         // skipping whitespaces & comments
         while ((*source_code == ' ') || (*source_code == '\t') || (*source_code == '#')) {
             // whitespaces until some other char
