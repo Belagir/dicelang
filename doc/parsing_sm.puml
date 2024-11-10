@@ -17,12 +17,13 @@ EXPRESSION --> EXPRESSION : unary_operand EXPRESSION
 EXPRESSION --> EXPRESSION : EXPRESSION binary_operand EXPRESSION
 EXPRESSION --> EXPRESSION : open_parenthesis EXPRESSION close_parenthesis
 
-EXPRESSION --> [*] :  value | value_real | VARIABLE | ARRAY | ARRAY_ACCESS
+EXPRESSION --> [*] : value | value_real
+EXPRESSION --> [*] : VARIABLE | ARRAY | ARRAY_ACCESS
 EXPRESSION --> [*] : FUNCTION_CALL | MUTATION_CALL
 
 start_state --> EXPRESSION_SET : EXPRESSION
 EXPRESSION_SET --> EXPRESSION_SET : EXPRESSION_SET separator EXPRESSION
 
-start_state --> assignment : VARIABLE designator EXPRESSION
+start_state --> ASSIGNMENT : VARIABLE designator EXPRESSION
 
 @enduml

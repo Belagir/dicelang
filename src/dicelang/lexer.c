@@ -59,7 +59,7 @@ struct dicelang_token_transition {
  * @brief Map from a character, to a token flavour, to a transition to another token flavour.
  * Accessing [c][tok] will give a transition to the valid token that the language knows of. If there is none, a dicelang_token_no_transition is given.
  */
-static const struct dicelang_token_transition dicelang_transitions[256][DTOK_NUMBER] = {
+static const struct dicelang_token_transition dicelang_transitions[][DTOK_NUMBER] = {
         ['\0']  = { [DTOK_empty] = { DTOK_file_end, true } },
 
         ['\n']  = { [DTOK_empty] = { DTOK_line_end, true },
@@ -334,11 +334,13 @@ static void dicelang_print_token(struct dicelang_token token, FILE *to_file)
         return;
     }
 
-    fprintf(to_file, "(%d:%d) %s\t", token.where.line, token.where.col, DTOK_names[token.flavour]);
+    fprintf(to_file, "(%d:%d)\t%- 20s`", token.where.line, token.where.col, DTOK_names[token.flavour]);
     for (size_t i = 0u ; i < token.value.source_length ; i++) {
-        fprintf(to_file, "%c", token.value.source[i]);
+        if (token.value.source[i] != '\n') {
+            fprintf(to_file, "%c", token.value.source[i]);
+        }
     }
-    fprintf(to_file, "\n");
+    fprintf(to_file, "`\n");
 }
 
 /**
