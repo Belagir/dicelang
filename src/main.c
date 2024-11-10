@@ -3,12 +3,13 @@
 #include <stdio.h>
 
 static const char test_code[] =
-        "R\n"
+        "R : 8754\n"
         "#comment\n"
         "    # other comment\n"
         "# comment 1\n"
         "# comment 2\n"
-        "VARIABLE # other other comment\n"
+        "VARIABLE : 42 # other other comment\n"
+        "VARIABLE:R\n"
         "W42\n"
         "SOME_VAR_78 SOME OTHER VARS\n"
         "\n"
