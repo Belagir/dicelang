@@ -11,6 +11,8 @@ int main(int argc, const char *argv[])
 
     dicelang_token_dump(program.tokens, stdout);
 
+    dicelang_parse(program.tokens, make_system_allocator());
+
     dicelang_program_destroy(&program, make_system_allocator());
 
     return 0;

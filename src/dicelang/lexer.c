@@ -43,7 +43,7 @@ static const char *DTOK_names[] = {
 /**
  * @brief Data representing some partial transition. Used to map a token flavour to some other token flavour in a transition array.
  *
- * @see dicelang_transitions
+ * @see dicelang_token_definitions
  */
 struct dicelang_token_transition {
     enum dicelang_token_flavour to;
@@ -59,7 +59,7 @@ struct dicelang_token_transition {
  * @brief Map from a character, to a token flavour, to a transition to another token flavour.
  * Accessing [c][tok] will give a transition to the valid token that the language knows of. If there is none, a dicelang_token_no_transition is given.
  */
-static const struct dicelang_token_transition dicelang_transitions[][DTOK_NUMBER] = {
+static const struct dicelang_token_transition dicelang_token_definitions[][DTOK_NUMBER] = {
         ['\0']  = { [DTOK_empty] = { DTOK_file_end, true } },
 
         ['\n']  = { [DTOK_empty] = { DTOK_line_end, true },
@@ -259,6 +259,7 @@ RANGE_TOKEN *dicelang_tokenize(const char *source_code, struct allocator alloc)
     struct dicelang_token tok = { .flavour = DTOK_empty };
     u32 line = 1u;
     u32 col = 1u;
+    size_t pos = 0u;
 
     if (!source_code) {
         return nullptr;
@@ -293,9 +294,12 @@ RANGE_TOKEN *dicelang_tokenize(const char *source_code, struct allocator alloc)
             col += tok.value.source_length;
         }
 
-        // adding the token in the range
-        read_tokens = range_ensure_capacity(alloc, RANGE_TO_ANY(read_tokens), 1u);
-        range_push(RANGE_TO_ANY(read_tokens), &tok);
+        if ((tok.flavour != DTOK_line_end)
+            || (read_tokens->length && (read_tokens->data[read_tokens->length-1].flavour != DTOK_line_end))) {
+            // adding the token in the range if not a repeating newline
+            read_tokens = range_ensure_capacity(alloc, RANGE_TO_ANY(read_tokens), 1u);
+            range_push(RANGE_TO_ANY(read_tokens), &tok);
+        }
     }
 
     return read_tokens;
@@ -363,7 +367,7 @@ static struct dicelang_token dicelang_token_read(const char **text, u32 line, u3
 
     do {
         // fetching the eventual transition
-        next_transition = dicelang_transitions[**text][current_transition.to];
+        next_transition = dicelang_token_definitions[**text][current_transition.to];
 
         // no transition exists, we are either at the end of a valid token (.is_endpoint is set) or a syntax error occurred.
         if (next_transition.to == DTOK_invalid) {
