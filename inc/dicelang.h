@@ -60,23 +60,6 @@ struct dicelang_token {
 /** Further range definition specificaly t store tokens. Defined so the compiler knows what it is working with. */
 typedef RANGE(struct dicelang_token) RANGE_TOKEN;
 
-enum dicelang_ext_syntax {
-    DSTX_function_call = DTOK_NUMBER,
-    DSTX_mutation_call,
-    DSTX_variable,
-    DSTX_array,
-    DSTX_array_access,
-    DSTX_expression,
-    DSTX_expression_set,
-    DSTX_assignment,
-
-    DSTX_NUMBER,
-};
-
-typedef u32 bit_field;
-#define DSTX_BIT_FLAG(what_) (0b1 << (what_))
-#define DSTX_BIT_FLAG_any (0xffffffff >> (8*sizeof(bit_field) - DSTX_NUMBER))
-
 /**
  * @brief
  *

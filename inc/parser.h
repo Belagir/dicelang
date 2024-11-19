@@ -4,6 +4,4 @@
 
 #include <dicelang.h>
 
-
-
 #endif
