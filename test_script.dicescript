@@ -1,15 +1,15 @@
 
 # bases
-R : 4 + 2_d20 + 3
+R : 3_d20 + 5
 
 #R : 1_d3
-#R : 4_d6 + 1 - _d20
+#R : 4_d6 + 1 - 1_d20
 #R : [1, 2, 2, 3, 4, 10]
 #R : 2_d20 + [3,4]
 
 ## todo : multiplication / division
-#  : 2_d20 * 1_d6
-#  : (3_d6 + 1.5) / 1_d4
+#R : 2_d20 * 1_d6
+#R : (3_d6 + 1.5) / 1_d4
 
 # modification
 #R : 4_d6-1_d20
