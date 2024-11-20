@@ -16,7 +16,7 @@
 /**
  * @brief Maps token flavours to some text representing each of them.
  */
-static const char *DTOK_names[] = {
+const char *DTOK_names[] = {
         [DTOK_invalid]            = "invalid",
         [DTOK_empty]              = "empty",
 
