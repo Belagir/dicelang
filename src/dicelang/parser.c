@@ -24,8 +24,8 @@ void dicelang_parse_node_print(struct dicelang_parse_node *node);
 
 // -------------------------------------------------------------------------------------------------
 
-static bool expect(RANGE_TOKEN *tokens, enum dicelang_token_flavour what);
-static bool accept(RANGE_TOKEN *tokens, enum dicelang_token_flavour what);
+static bool expect(RANGE_TOKEN *tokens, enum dicelang_token_flavour what, struct dicelang_parse_node *parent, struct allocator alloc);
+static bool accept(RANGE_TOKEN *tokens, enum dicelang_token_flavour what, struct dicelang_parse_node *parent, struct allocator alloc);
 static bool next_is(RANGE_TOKEN *tokens, enum dicelang_token_flavour what);
 
 // -------------------------------------------------------------------------------------------------
@@ -106,7 +106,13 @@ void dicelang_parse_node_destroy(struct dicelang_parse_node **node, struct alloc
         return;
     }
 
+    for (size_t i = 0 ; i < (*node)->children->length ; i++) {
+        dicelang_parse_node_destroy((*node)->children->data + i, alloc);
+    }
+
     range_destroy_dynamic(alloc, &RANGE_TO_ANY((*node)->children));
+    alloc.free(alloc, *node);
+
     *node = nullptr;
 }
 
@@ -139,9 +145,9 @@ void dicelang_parse_node_print(struct dicelang_parse_node *node)
  * @return true
  * @return false
  */
-static bool expect(RANGE_TOKEN *tokens, enum dicelang_token_flavour what)
+static bool expect(RANGE_TOKEN *tokens, enum dicelang_token_flavour what, struct dicelang_parse_node *parent, struct allocator alloc)
 {
-    if (accept(tokens, what)) {
+    if (accept(tokens, what, parent, alloc)) {
         return true;
     }
     printf("syntax error near %s (%d:%d) : expected %s\n",
@@ -160,9 +166,12 @@ static bool expect(RANGE_TOKEN *tokens, enum dicelang_token_flavour what)
  * @return true
  * @return false
  */
-static bool accept(RANGE_TOKEN *tokens, enum dicelang_token_flavour what)
+static bool accept(RANGE_TOKEN *tokens, enum dicelang_token_flavour what, struct dicelang_parse_node *parent, struct allocator alloc)
 {
+    struct dicelang_parse_node *new_node = nullptr;
+
     if (next_is(tokens, what)) {
+        new_node = dicelang_parse_node_create(tokens->data[0], parent, alloc);
         return range_remove(RANGE_TO_ANY(tokens), 0);
     }
     return false;
@@ -189,46 +198,81 @@ static bool next_is(RANGE_TOKEN *tokens, enum dicelang_token_flavour what)
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------
 
+/**
+ * @brief
+ *
+ * @param tokens
+ * @param parent
+ * @param alloc
+ */
 static void assignment(RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, struct allocator alloc)
 {
     struct dicelang_parse_node *assignment_node = dicelang_parse_node_create(
             (struct dicelang_token) { .flavour = DSTX_assignment, }, parent, alloc);
 
     variable(tokens, assignment_node, alloc);
-    expect(tokens, DTOK_designator);
+    expect(tokens, DTOK_designator, assignment_node, alloc);
     expression(tokens, assignment_node, alloc);
 }
 
+/**
+ * @brief
+ *
+ * @param tokens
+ * @param parent
+ * @param alloc
+ */
 static void variable(RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, struct allocator alloc)
 {
     struct dicelang_parse_node *variable_node = dicelang_parse_node_create(
             (struct dicelang_token) { .flavour = DSTX_variable, }, parent, alloc);
 
-    expect(tokens, DTOK_identifier);
+    expect(tokens, DTOK_identifier, variable_node, alloc);
 }
 
+/**
+ * @brief
+ *
+ * @param tokens
+ * @param parent
+ * @param alloc
+ */
 static void expression(RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, struct allocator alloc)
 {
     struct dicelang_parse_node *expression_node = dicelang_parse_node_create(
             (struct dicelang_token) { .flavour = DSTX_expression, }, parent, alloc);
 
     dice(tokens, expression_node, alloc);
-    while (accept(tokens, DTOK_addition)) {
+    while (accept(tokens, DTOK_addition, expression_node, alloc)) {
         dice(tokens, expression_node, alloc);
     }
 }
 
+/**
+ * @brief
+ *
+ * @param tokens
+ * @param parent
+ * @param alloc
+ */
 static void dice(RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, struct allocator alloc)
 {
     struct dicelang_parse_node *dice_node = dicelang_parse_node_create(
             (struct dicelang_token) { .flavour = DSTX_dice, }, parent, alloc);
 
     factor(tokens, dice_node, alloc);
-    while (accept(tokens, DTOK_d)) {
+    while (accept(tokens, DTOK_d, dice_node, alloc)) {
         factor(tokens, dice_node, alloc);
     }
 }
 
+/**
+ * @brief
+ *
+ * @param tokens
+ * @param parent
+ * @param alloc
+ */
 static void factor(RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, struct allocator alloc)
 {
     struct dicelang_parse_node *factor_node = dicelang_parse_node_create(
@@ -237,15 +281,22 @@ static void factor(RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, stru
     operand(tokens, factor_node, alloc);
 }
 
+/**
+ * @brief
+ *
+ * @param tokens
+ * @param parent
+ * @param alloc
+ */
 static void operand(RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, struct allocator alloc)
 {
     struct dicelang_parse_node *operand_node = dicelang_parse_node_create(
             (struct dicelang_token) { .flavour = DSTX_operand, }, parent, alloc);
 
-    if (accept(tokens, DTOK_open_parenthesis)) {
+    if (accept(tokens, DTOK_open_parenthesis, operand_node, alloc)) {
         expression(tokens, operand_node, alloc);
-        expect(tokens, DTOK_close_parenthesis);
+        expect(tokens, DTOK_close_parenthesis, operand_node, alloc);
     } else {
-        expect(tokens, DTOK_value);
+        expect(tokens, DTOK_value, operand_node, alloc);
     }
 }
