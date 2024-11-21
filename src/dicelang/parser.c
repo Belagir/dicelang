@@ -33,6 +33,7 @@ static void expression(RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, 
 static void dice      (RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, struct dicelang_error *error_sink, struct allocator alloc);
 static void factor    (RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, struct dicelang_error *error_sink, struct allocator alloc);
 static void operand   (RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, struct dicelang_error *error_sink, struct allocator alloc);
+static void expr_set  (RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, struct dicelang_error *error_sink, struct allocator alloc);
 
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------
@@ -294,6 +295,9 @@ static void factor(RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, stru
             (struct dicelang_token) { .flavour = DSTX_factor, }, parent, alloc);
 
     operand(tokens, factor_node, error_sink, alloc);
+    while (accept(tokens, DTOK_multiplication, factor_node, alloc) || accept(tokens, DTOK_division, factor_node, alloc)) {
+        operand(tokens, factor_node, error_sink, alloc);
+    }
 }
 
 /**
@@ -308,7 +312,25 @@ static void operand(RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, str
     if (accept(tokens, DTOK_open_parenthesis, operand_node, alloc)) {
         expression(tokens, operand_node, error_sink, alloc);
         expect(tokens, DTOK_close_parenthesis, operand_node, error_sink, alloc);
+    } else if (accept(tokens, DTOK_open_sq_bracket, operand_node, alloc)) {
+        expr_set(tokens, operand_node, error_sink, alloc);
+        expect(tokens, DTOK_close_sq_bracket, operand_node, error_sink, alloc);
     } else {
         expect(tokens, DTOK_value, operand_node, error_sink, alloc);
+    }
+}
+
+/**
+ * @brief
+ *
+ */
+static void expr_set(RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, struct dicelang_error *error_sink, struct allocator alloc)
+{
+    struct dicelang_parse_node *expr_set_node = dicelang_parse_node_create(
+            (struct dicelang_token) { .flavour = DSTX_expression_set, }, parent, alloc);
+
+    expression(tokens, expr_set_node, error_sink, alloc);
+    while (accept(tokens, DTOK_separator, expr_set_node, alloc)) {
+        expression(tokens, expr_set_node, error_sink, alloc);
     }
 }

@@ -32,6 +32,8 @@ enum dicelang_token_flavour {
     DTOK_separator,             ///< Argument or array elements separator.
     DTOK_addition,              ///< Addition binary operand.
     DTOK_substraction,          ///< Substraction binary operand.
+    DTOK_multiplication,        ///< Substraction binary operand.
+    DTOK_division,              ///< Substraction binary operand.
     DTOK_d,                     ///< Dice distribution binary operand.
     DTOK_designator,            ///< Assignment token to link an expression to a variable.
     DTOK_open_parenthesis,      ///< Token to start either a function call's argument list or to start isolating part of an expression.
@@ -57,6 +59,7 @@ enum dicelang_syntax_flavour {
     DSTX_dice,
     DSTX_factor,
     DSTX_operand,
+    DSTX_expression_set,
 
     DSTX_NUMBER,
 };

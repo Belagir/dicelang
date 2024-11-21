@@ -192,10 +192,12 @@ static const struct dicelang_token_transition dicelang_token_definitions[][DTOK_
         ['_']   = { [DTOK_empty]        = { DTOK_d, false },
                     [DTOK_identifier]   = { DTOK_identifier, true } },
 
-        [':']   = { [DTOK_empty] = { DTOK_designator,   true } },
-        [',']   = { [DTOK_empty] = { DTOK_separator,    true } },
-        ['+']   = { [DTOK_empty] = { DTOK_addition,     true } },
-        ['-']   = { [DTOK_empty] = { DTOK_substraction, true } },
+        [':']   = { [DTOK_empty] = { DTOK_designator,     true } },
+        [',']   = { [DTOK_empty] = { DTOK_separator,      true } },
+        ['+']   = { [DTOK_empty] = { DTOK_addition,       true } },
+        ['-']   = { [DTOK_empty] = { DTOK_substraction,   true } },
+        ['*']   = { [DTOK_empty] = { DTOK_multiplication, true } },
+        ['/']   = { [DTOK_empty] = { DTOK_division,       true } },
 
         ['(']   = { [DTOK_empty] = { DTOK_open_parenthesis,  true } },
         [')']   = { [DTOK_empty] = { DTOK_close_parenthesis, true } },
