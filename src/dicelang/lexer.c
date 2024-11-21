@@ -14,33 +14,6 @@
 // -------------------------------------------------------------------------------------------------
 
 /**
- * @brief Maps token flavours to some text representing each of them.
- */
-const char *DTOK_names[] = {
-        [DTOK_invalid]            = "invalid",
-        [DTOK_empty]              = "empty",
-
-        [DTOK_line_end]           = "line_end",
-        [DTOK_file_end]           = "file_end",
-        [DTOK_identifier]         = "identifier",
-        [DTOK_value]              = "value",
-        [DTOK_value_real]         = "value_real",
-        [DTOK_separator]          = "separator",
-        [DTOK_addition]           = "addition",
-        [DTOK_substraction]       = "substraction",
-        [DTOK_d]                  = "_d",
-        [DTOK_designator]         = "designator",
-        [DTOK_open_parenthesis]   = "open parenthesis",
-        [DTOK_close_parenthesis]  = "close parenthesis",
-        [DTOK_open_bracket]       = "open bracket",
-        [DTOK_close_bracket]      = "close bracket",
-        [DTOK_open_sq_bracket]    = "open square bracket",
-        [DTOK_close_sq_bracket]   = "close square bracket",
-};
-
-// -------------------------------------------------------------------------------------------------
-
-/**
  * @brief Data representing some partial transition. Used to map a token flavour to some other token flavour in a transition array.
  *
  * @see dicelang_token_definitions
@@ -235,8 +208,6 @@ static const struct dicelang_token_transition dicelang_token_definitions[][DTOK_
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------
 
-// Outputs one token information to a file.
-static void dicelang_print_token(struct dicelang_token token, FILE *to_file);
 // Reads one token from a string and consumes the characters read.
 static struct dicelang_token dicelang_token_read(const char **text, u32 line, u32 col);
 
@@ -319,33 +290,12 @@ void dicelang_token_dump(RANGE_TOKEN *tokens, FILE *to_file)
     }
 
     for (size_t i = 0u ; i < tokens->length ; i++) {
-        dicelang_print_token(tokens->data[i], to_file);
+        dicelang_token_print(tokens->data[i], to_file);
     }
 }
 
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------
-
-/**
- * @brief Prints one token to a file;
- *
- * @param[in] token
- * @param[in] to_file
- */
-static void dicelang_print_token(struct dicelang_token token, FILE *to_file)
-{
-    if (!to_file || (token.flavour >= DTOK_NUMBER)) {
-        return;
-    }
-
-    fprintf(to_file, "(%d:%d)\t%- 20s`", token.where.line, token.where.col, DTOK_names[token.flavour]);
-    for (size_t i = 0u ; i < token.value.source_length ; i++) {
-        if (token.value.source[i] != '\n') {
-            fprintf(to_file, "%c", token.value.source[i]);
-        }
-    }
-    fprintf(to_file, "`\n");
-}
 
 /**
  * @brief Reads one token from a string, and consumes the character(s) representing this token.

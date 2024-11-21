@@ -7,6 +7,41 @@
 // -------------------------------------------------------------------------------------------------
 
 /**
+ * @brief Maps token flavours to some text representing each of them.
+ */
+const char *DTOK_DSTX_names[DSTX_NUMBER] = {
+        [DTOK_invalid]            = "invalid",
+        [DTOK_empty]              = "empty",
+
+        [DTOK_line_end]           = "line_end",
+        [DTOK_file_end]           = "file_end",
+        [DTOK_identifier]         = "identifier",
+        [DTOK_value]              = "value",
+        [DTOK_value_real]         = "value_real",
+        [DTOK_separator]          = "separator",
+        [DTOK_addition]           = "addition",
+        [DTOK_substraction]       = "substraction",
+        [DTOK_d]                  = "_d",
+        [DTOK_designator]         = "designator",
+        [DTOK_open_parenthesis]   = "open parenthesis",
+        [DTOK_close_parenthesis]  = "close parenthesis",
+        [DTOK_open_bracket]       = "open bracket",
+        [DTOK_close_bracket]      = "close bracket",
+        [DTOK_open_sq_bracket]    = "open square bracket",
+        [DTOK_close_sq_bracket]   = "close square bracket",
+
+        [DSTX_assignment]         = "assignment",
+        [DSTX_variable]           = "variable",
+        [DSTX_expression]         = "expression",
+        [DSTX_dice]               = "dice",
+        [DSTX_factor]             = "factor",
+        [DSTX_operand]            = "operand",
+};
+
+// -------------------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------
+
+/**
  * @brief
  *
  * @param from_file
@@ -53,5 +88,31 @@ void dicelang_program_destroy(struct dicelang_program *program, allocator alloc)
     *program = (struct dicelang_program) { 0u };
 }
 
+/**
+ * @brief Prints one token to a file;
+ *
+ * @param[in] token
+ * @param[in] to_file
+ */
+void dicelang_token_print(struct dicelang_token token, FILE *to_file)
+{
+    if (!to_file || (token.flavour >= DSTX_NUMBER)) {
+        return;
+    }
+
+    fprintf(to_file, "(%d:%d)\t%c%- 20s`",
+            token.where.line,
+            token.where.col,
+            (token.flavour < DTOK_NUMBER)? '*' : ' ',
+            DTOK_DSTX_names[token.flavour]);
+
+    for (size_t i = 0u ; i < token.value.source_length ; i++) {
+        if (token.value.source[i] != '\n') {
+            fprintf(to_file, "%c", token.value.source[i]);
+        }
+    }
+
+    fprintf(to_file, "`\n");
+}
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------

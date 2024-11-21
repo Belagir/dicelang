@@ -64,6 +64,21 @@ typedef RANGE(struct dicelang_token) RANGE_TOKEN;
  * @brief
  *
  */
+enum dicelang_syntax_flavour {
+    DSTX_assignment = DTOK_NUMBER,
+    DSTX_variable,
+    DSTX_expression,
+    DSTX_dice,
+    DSTX_factor,
+    DSTX_operand,
+
+    DSTX_NUMBER,
+};
+
+/**
+ * @brief
+ *
+ */
 struct dicelang_program {
     RANGE(const char) *text;
     RANGE_TOKEN *tokens;
