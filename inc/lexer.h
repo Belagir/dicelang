@@ -25,6 +25,7 @@
 RANGE_TOKEN *dicelang_tokenize(const char *source_code, struct allocator alloc);
 // Prints debug token information to some file.
 void dicelang_token_dump(RANGE_TOKEN *tokens, FILE *to_file);
+// Prints one token to a file.
 void dicelang_token_print(struct dicelang_token token, FILE *to_file);
 
 //  ------------------------------------------------------------------------------------------------

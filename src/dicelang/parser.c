@@ -1,4 +1,13 @@
-
+/**
+ * @file parser.c
+ * @author gabriel
+ * @brief Parser implementation file. Builds a parser tree from tokens so they can be interpreted.
+ * @version 0.1
+ * @date 2024-11-21
+ *
+ * @copyright Copyright (c) 2024
+ *
+ */
 #include <ustd/range.h>
 
 #include <dicelang.h>
@@ -14,7 +23,7 @@ static struct dicelang_parse_node *dicelang_parse_node_create(struct dicelang_to
 
 static bool expect(RANGE_TOKEN *tokens, enum dicelang_token_flavour what, struct dicelang_parse_node *parent, struct allocator alloc);
 static bool accept(RANGE_TOKEN *tokens, enum dicelang_token_flavour what, struct dicelang_parse_node *parent, struct allocator alloc);
-static bool next_is(RANGE_TOKEN *tokens, enum dicelang_token_flavour what);
+static bool next_is(const RANGE_TOKEN *tokens, enum dicelang_token_flavour what);
 
 // -------------------------------------------------------------------------------------------------
 
@@ -29,10 +38,12 @@ static void operand   (RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, 
 // -------------------------------------------------------------------------------------------------
 
 /**
- * @brief
+ * @brief Constructs a tree of syntax nodes by consuming a set of tokens, and returns its root node.
  *
- * @param tokens
- * @param alloc
+ * @param[inout] tokens
+ * @param[in] alloc
+ *
+ * @return struct dicelang_parse_node *
  */
 struct dicelang_parse_node *dicelang_parse(RANGE_TOKEN *tokens, struct allocator alloc)
 {
@@ -57,11 +68,12 @@ struct dicelang_parse_node *dicelang_parse(RANGE_TOKEN *tokens, struct allocator
 // -------------------------------------------------------------------------------------------------
 
 /**
- * @brief
+ * @brief Recursively prints a parse tree to some file.
  *
- * @param node
+ * @param[in] node
+ * @param[in] to_file
  */
-void dicelang_parse_node_print(struct dicelang_parse_node *node, FILE *to_file)
+void dicelang_parse_node_print(const struct dicelang_parse_node *node, FILE *to_file)
 {
     if (!node) {
         return;
@@ -75,10 +87,10 @@ void dicelang_parse_node_print(struct dicelang_parse_node *node, FILE *to_file)
 }
 
 /**
- * @brief
+ * @brief Recursively destroys a parse tree, releasing the memory used by a node and all its children.
  *
- * @param node
- * @param alloc
+ * @param[inout] node
+ * @param[in] alloc
  */
 void dicelang_parse_node_destroy(struct dicelang_parse_node **node, struct allocator alloc)
 {
@@ -100,11 +112,12 @@ void dicelang_parse_node_destroy(struct dicelang_parse_node **node, struct alloc
 // -------------------------------------------------------------------------------------------------
 
 /**
- * @brief
+ * @brief Creates a new syntax node representing a token.
+ * It may be linked to a parent node, in which case this parent's node will have its children collection modified, and maybe reallocated.
  *
- * @param token
- * @param parent
- * @param alloc
+ * @param[in] token
+ * @param[inout] parent
+ * @param[in] alloc
  * @return struct dicelang_parse_node*
  */
 static struct dicelang_parse_node *dicelang_parse_node_create(struct dicelang_token token, struct dicelang_parse_node *parent, struct allocator alloc)
@@ -134,10 +147,14 @@ static struct dicelang_parse_node *dicelang_parse_node_create(struct dicelang_to
 // -------------------------------------------------------------------------------------------------
 
 /**
- * @brief
+ * @brief Requires that the leading token in the set is of some flavour. If not, a syntax error is generated.
+ * On success, this will consume the leading token and add a new child node under the supplied parent.
+ * In this case, if the parent is null, no node will be created but the leading token will still be removed.
  *
- * @param tokens
- * @param what
+ * @param[inout] tokens
+ * @param[in] what
+ * @param[in] parent
+ * @param[in] alloc
  * @return true
  * @return false
  */
@@ -146,6 +163,7 @@ static bool expect(RANGE_TOKEN *tokens, enum dicelang_token_flavour what, struct
     if (accept(tokens, what, parent, alloc)) {
         return true;
     }
+
     printf("syntax error near %s (%d:%d) : expected %s\n",
             DTOK_DSTX_names[tokens->data[0].flavour],
             tokens->data[0].where.line,
@@ -155,10 +173,14 @@ static bool expect(RANGE_TOKEN *tokens, enum dicelang_token_flavour what, struct
 }
 
 /**
- * @brief
+ * @brief Tries to match the leading token against some flavour, without creating an error on failure.
+ * On success, this will consume the leading token and add a new child node under the supplied parent.
+ * In this case, if the parent is null, no node will be created but the leading token will still be removed.
  *
- * @param tokens
- * @param what
+ * @param[inout] tokens
+ * @param[in] what
+ * @param[in] parent
+ * @param[in] alloc
  * @return true
  * @return false
  */
@@ -166,22 +188,22 @@ static bool accept(RANGE_TOKEN *tokens, enum dicelang_token_flavour what, struct
 {
     struct dicelang_parse_node *new_node = nullptr;
 
-    if (next_is(tokens, what)) {
-        new_node = dicelang_parse_node_create(tokens->data[0], parent, alloc);
+    if (parent && next_is(tokens, what)) {
+        if (parent) new_node = dicelang_parse_node_create(tokens->data[0], parent, alloc);
         return range_remove(RANGE_TO_ANY(tokens), 0);
     }
     return false;
 }
 
 /**
- * @brief
+ * @brief Peeks at the leading token, returning true if it matches some flavour without consuming it.
  *
- * @param tokens
- * @param what
+ * @param[in] tokens
+ * @param[in] what
  * @return true
  * @return false
  */
-static bool next_is(RANGE_TOKEN *tokens, enum dicelang_token_flavour what)
+static bool next_is(const RANGE_TOKEN *tokens, enum dicelang_token_flavour what)
 {
     if (!tokens || !tokens->data || (tokens->length == 0)) {
         return false;
@@ -197,9 +219,6 @@ static bool next_is(RANGE_TOKEN *tokens, enum dicelang_token_flavour what)
 /**
  * @brief
  *
- * @param tokens
- * @param parent
- * @param alloc
  */
 static void assignment(RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, struct allocator alloc)
 {
@@ -214,9 +233,6 @@ static void assignment(RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, 
 /**
  * @brief
  *
- * @param tokens
- * @param parent
- * @param alloc
  */
 static void variable(RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, struct allocator alloc)
 {
@@ -229,9 +245,6 @@ static void variable(RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, st
 /**
  * @brief
  *
- * @param tokens
- * @param parent
- * @param alloc
  */
 static void expression(RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, struct allocator alloc)
 {
@@ -239,7 +252,7 @@ static void expression(RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, 
             (struct dicelang_token) { .flavour = DSTX_expression, }, parent, alloc);
 
     dice(tokens, expression_node, alloc);
-    while (accept(tokens, DTOK_addition, expression_node, alloc)) {
+    while (accept(tokens, DTOK_addition, expression_node, alloc) || accept(tokens, DTOK_substraction, expression_node, alloc)) {
         dice(tokens, expression_node, alloc);
     }
 }
@@ -247,9 +260,6 @@ static void expression(RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, 
 /**
  * @brief
  *
- * @param tokens
- * @param parent
- * @param alloc
  */
 static void dice(RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, struct allocator alloc)
 {
@@ -265,9 +275,6 @@ static void dice(RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, struct
 /**
  * @brief
  *
- * @param tokens
- * @param parent
- * @param alloc
  */
 static void factor(RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, struct allocator alloc)
 {
@@ -280,9 +287,6 @@ static void factor(RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, stru
 /**
  * @brief
  *
- * @param tokens
- * @param parent
- * @param alloc
  */
 static void operand(RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, struct allocator alloc)
 {

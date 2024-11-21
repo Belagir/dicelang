@@ -8,7 +8,7 @@
 // -------------------------------------------------------------------------------------------------
 
 /**
- * @brief Maps token flavours to some text representing each of them.
+ * @brief Maps token & syntax flavours to some text representing each of them.
  */
 const char *DTOK_DSTX_names[DSTX_NUMBER] = {
         [DTOK_invalid]            = "invalid",
@@ -100,7 +100,7 @@ void dicelang_program_destroy(struct dicelang_program *program, allocator alloc)
 }
 
 /**
- * @brief Prints one token to a file;
+ * @brief Prints one token to a file. The token may have a flavour that is non-terminal (is part of the dicelang_syntax_flavour enum).
  *
  * @param[in] token
  * @param[in] to_file
@@ -111,12 +111,14 @@ void dicelang_token_print(struct dicelang_token token, FILE *to_file)
         return;
     }
 
+    // printing token info
     fprintf(to_file, "(%d:%d)\t%c%- 20s`",
             token.where.line,
             token.where.col,
             (token.flavour < DTOK_NUMBER)? '*' : ' ',
             DTOK_DSTX_names[token.flavour]);
 
+    // printing token text
     for (size_t i = 0u ; i < token.value.source_length ; i++) {
         if (token.value.source[i] != '\n') {
             fprintf(to_file, "%c", token.value.source[i]);

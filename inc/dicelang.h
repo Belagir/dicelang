@@ -1,7 +1,7 @@
 /**
  * @file dicelang.h
  * @author gabriel
- * @brief Main dicelang interpretation header.
+ * @brief Main dicelang interpretation private header.
  * @version 0.1
  * @date 2024-11-10
  *
@@ -45,26 +45,7 @@ enum dicelang_token_flavour {
 };
 
 /**
- * @brief Dicelang token, dependent on some source code.
- */
-struct dicelang_token {
-    /** Token nature. */
-    enum dicelang_token_flavour flavour;
-
-    /** Value information, references the source code. */
-    struct { const char *source; size_t source_length; } value;
-    /** Position information of the token in the source code file. */
-    struct { u32 line, col; } where;
-};
-
-/** Further range definition specificaly t store tokens. Defined so the compiler knows what it is working with. */
-typedef RANGE(struct dicelang_token) RANGE_TOKEN;
-
-// -------------------------------------------------------------------------------------------------
-// -------------------------------------------------------------------------------------------------
-
-/**
- * @brief
+ * @brief Extension of the dicelang_token_flavour enum. Represents non-terminal syntax.
  *
  */
 enum dicelang_syntax_flavour {
@@ -80,28 +61,45 @@ enum dicelang_syntax_flavour {
     DSTX_NUMBER,
 };
 
-// -------------------------------------------------------------------------------------------------
-// -------------------------------------------------------------------------------------------------
+/**
+ * @brief Dicelang token, dependent on some source code.
+ */
+struct dicelang_token {
+    /** Token nature. */
+    enum dicelang_token_flavour flavour;
 
-extern const char *DTOK_DSTX_names[];
+    /** Value information, references the source code. */
+    struct { const char *source; size_t source_length; } value;
+    /** Position information of the token in the source code file. */
+    struct { u32 line, col; } where;
+};
 
-// -------------------------------------------------------------------------------------------------
-// -------------------------------------------------------------------------------------------------
+/** Further range definition specificaly t store tokens. Defined so the compiler knows what it is working with. */
+typedef RANGE(struct dicelang_token) RANGE_TOKEN;
 
 /**
- * @brief
+ * @brief Contains all the information needed to represent & interpet a dicelang program.
  *
  */
 struct dicelang_program {
+    /** Text from the read file. */
     RANGE(const char) *text;
+    /** Parse tree generated from the text. */
     struct dicelang_parse_node *parse_tree;
 };
 
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------
 
-struct dicelang_program dicelang_program_create_from_file(FILE *from_file, allocator alloc);
+// Array of static strings indexed to the syntax and token flavours, giving each of their names.
+extern const char *DTOK_DSTX_names[];
 
+// -------------------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------
+
+// Load a program from a file.
+struct dicelang_program dicelang_program_create_from_file(FILE *from_file, allocator alloc);
+// Releases memory taken by a loaded program.
 void dicelang_program_destroy(struct dicelang_program *program, allocator alloc);
 
 // -------------------------------------------------------------------------------------------------
