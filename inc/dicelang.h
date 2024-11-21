@@ -60,12 +60,17 @@ struct dicelang_token {
 /** Further range definition specificaly t store tokens. Defined so the compiler knows what it is working with. */
 typedef RANGE(struct dicelang_token) RANGE_TOKEN;
 
+// -------------------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------
+
 /**
  * @brief
  *
  */
 enum dicelang_syntax_flavour {
-    DSTX_assignment = DTOK_NUMBER,
+    DSTX_program = DTOK_NUMBER,
+
+    DSTX_assignment,
     DSTX_variable,
     DSTX_expression,
     DSTX_dice,
@@ -75,13 +80,21 @@ enum dicelang_syntax_flavour {
     DSTX_NUMBER,
 };
 
+// -------------------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------
+
+extern const char *DTOK_DSTX_names[];
+
+// -------------------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------
+
 /**
  * @brief
  *
  */
 struct dicelang_program {
     RANGE(const char) *text;
-    RANGE_TOKEN *tokens;
+    struct dicelang_parse_node *parse_tree;
 };
 
 // -------------------------------------------------------------------------------------------------
@@ -90,10 +103,6 @@ struct dicelang_program {
 struct dicelang_program dicelang_program_create_from_file(FILE *from_file, allocator alloc);
 
 void dicelang_program_destroy(struct dicelang_program *program, allocator alloc);
-
-// -------------------------------------------------------------------------------------------------
-
-void dicelang_parse(RANGE_TOKEN *tokens, allocator alloc);
 
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------

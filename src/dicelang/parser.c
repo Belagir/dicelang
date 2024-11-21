@@ -3,24 +3,12 @@
 
 #include <dicelang.h>
 #include <lexer.h>
+#include <parser.h>
 
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------
 
-struct dicelang_parse_node {
-    struct dicelang_token token;
-
-    struct dicelang_parse_node *parent;
-    RANGE(struct dicelang_parse_node *) *children;
-};
-
-// -------------------------------------------------------------------------------------------------
-// -------------------------------------------------------------------------------------------------
-
-struct dicelang_parse_node *dicelang_parse_node_create(struct dicelang_token token, struct dicelang_parse_node *parent, struct allocator alloc);
-void dicelang_parse_node_destroy(struct dicelang_parse_node **node, struct allocator alloc);
-
-void dicelang_parse_node_print(struct dicelang_parse_node *node);
+static struct dicelang_parse_node *dicelang_parse_node_create(struct dicelang_token token, struct dicelang_parse_node *parent, struct allocator alloc);
 
 // -------------------------------------------------------------------------------------------------
 
@@ -46,14 +34,23 @@ static void operand   (RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, 
  * @param tokens
  * @param alloc
  */
-void dicelang_parse(RANGE_TOKEN *tokens, struct allocator alloc)
+struct dicelang_parse_node *dicelang_parse(RANGE_TOKEN *tokens, struct allocator alloc)
 {
-    struct dicelang_parse_node *start = dicelang_parse_node_create((struct dicelang_token) { }, nullptr, alloc);
+    if (!tokens || !tokens->data) {
+        return nullptr;
+    }
 
-    assignment(tokens, start, alloc);
+    struct dicelang_parse_node *program = dicelang_parse_node_create((struct dicelang_token) { .flavour = DSTX_program }, nullptr, alloc);
 
-    dicelang_parse_node_print(start);
-    dicelang_parse_node_destroy(&start, alloc);
+    accept(tokens, DTOK_line_end, program, alloc);
+    assignment(tokens, program, alloc);
+    while (accept(tokens, DTOK_line_end, program, alloc)) {
+        if (!accept(tokens, DTOK_file_end, program, alloc)) {
+            assignment(tokens, program, alloc);
+        }
+    }
+
+    return program;
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -62,36 +59,19 @@ void dicelang_parse(RANGE_TOKEN *tokens, struct allocator alloc)
 /**
  * @brief
  *
- * @param token
- * @param parent
- * @param alloc
- * @return struct dicelang_parse_node*
+ * @param node
  */
-struct dicelang_parse_node *dicelang_parse_node_create(struct dicelang_token token, struct dicelang_parse_node *parent, struct allocator alloc)
+void dicelang_parse_node_print(struct dicelang_parse_node *node, FILE *to_file)
 {
-    struct dicelang_parse_node *new_node = alloc.malloc(alloc, sizeof(*new_node));
-
-    if (!new_node) {
-        return nullptr;
+    if (!node) {
+        return;
     }
 
-    *new_node = (struct dicelang_parse_node) {
-            .token = token,
+    dicelang_token_print(node->token, to_file);
 
-            .parent = parent,
-            .children = range_create_dynamic(alloc, sizeof(*new_node->children->data), 8),
-    };
-
-    if (parent) {
-        if (parent->children->length == 0) {
-            parent->token.where = token.where;
-        }
-
-        parent->children = range_ensure_capacity(alloc, RANGE_TO_ANY(parent->children), 1);
-        range_push(RANGE_TO_ANY(parent->children), &new_node);
+    for (size_t i = 0 ; i < node->children->length ; i++) {
+        dicelang_parse_node_print(node->children->data[i], to_file);
     }
-
-    return new_node;
 }
 
 /**
@@ -116,22 +96,38 @@ void dicelang_parse_node_destroy(struct dicelang_parse_node **node, struct alloc
     *node = nullptr;
 }
 
+// -------------------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------
+
 /**
  * @brief
  *
- * @param node
+ * @param token
+ * @param parent
+ * @param alloc
+ * @return struct dicelang_parse_node*
  */
-void dicelang_parse_node_print(struct dicelang_parse_node *node)
+static struct dicelang_parse_node *dicelang_parse_node_create(struct dicelang_token token, struct dicelang_parse_node *parent, struct allocator alloc)
 {
-    if (!node) {
-        return;
+    struct dicelang_parse_node *new_node = alloc.malloc(alloc, sizeof(*new_node));
+
+    if (!new_node) {
+        return nullptr;
     }
 
-    dicelang_token_print(node->token, stdout);
+    *new_node = (struct dicelang_parse_node) {
+            .token = token,
 
-    for (size_t i = 0 ; i < node->children->length ; i++) {
-        dicelang_parse_node_print(node->children->data[i]);
+            .parent = parent,
+            .children = range_create_dynamic(alloc, sizeof(*new_node->children->data), 8),
+    };
+
+    if (parent) {
+        parent->children = range_ensure_capacity(alloc, RANGE_TO_ANY(parent->children), 1);
+        range_push(RANGE_TO_ANY(parent->children), &new_node);
     }
+
+    return new_node;
 }
 
 // -------------------------------------------------------------------------------------------------
