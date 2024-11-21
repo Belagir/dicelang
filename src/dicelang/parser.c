@@ -28,7 +28,6 @@ static bool next_is(const RANGE_TOKEN *tokens, enum dicelang_token_flavour what)
 // -------------------------------------------------------------------------------------------------
 
 static void assignment(RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, struct dicelang_error *error_sink, struct allocator alloc);
-static void variable  (RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, struct dicelang_error *error_sink, struct allocator alloc);
 static void expression(RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, struct dicelang_error *error_sink, struct allocator alloc);
 static void dice      (RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, struct dicelang_error *error_sink, struct allocator alloc);
 static void factor    (RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, struct dicelang_error *error_sink, struct allocator alloc);
@@ -238,21 +237,9 @@ static void assignment(RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, 
     struct dicelang_parse_node *assignment_node = dicelang_parse_node_create(
             (struct dicelang_token) { .flavour = DSTX_assignment, }, parent, alloc);
 
-    variable(tokens, assignment_node, error_sink, alloc);
+    expect(tokens, DTOK_identifier, assignment_node, error_sink, alloc);
     expect(tokens, DTOK_designator, assignment_node, error_sink, alloc);
     expression(tokens, assignment_node, error_sink, alloc);
-}
-
-/**
- * @brief
- *
- */
-static void variable(RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, struct dicelang_error *error_sink, struct allocator alloc)
-{
-    struct dicelang_parse_node *variable_node = dicelang_parse_node_create(
-            (struct dicelang_token) { .flavour = DSTX_variable, }, parent, alloc);
-
-    expect(tokens, DTOK_identifier, variable_node, error_sink, alloc);
 }
 
 /**
@@ -312,11 +299,14 @@ static void operand(RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, str
     if (accept(tokens, DTOK_open_parenthesis, operand_node, alloc)) {
         expression(tokens, operand_node, error_sink, alloc);
         expect(tokens, DTOK_close_parenthesis, operand_node, error_sink, alloc);
+
     } else if (accept(tokens, DTOK_open_sq_bracket, operand_node, alloc)) {
         expr_set(tokens, operand_node, error_sink, alloc);
         expect(tokens, DTOK_close_sq_bracket, operand_node, error_sink, alloc);
+
+    } else if (accept(tokens, DTOK_value, operand_node, alloc)) {
     } else {
-        expect(tokens, DTOK_value, operand_node, error_sink, alloc);
+        expect(tokens, DTOK_identifier, operand_node, error_sink, alloc);
     }
 }
 
