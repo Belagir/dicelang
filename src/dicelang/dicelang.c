@@ -7,6 +7,11 @@
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------
 
+void dicelang_error_print(struct dicelang_error err, FILE *to_file);
+
+// -------------------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------
+
 /**
  * @brief Maps token & syntax flavours to some text representing each of them.
  */
@@ -72,11 +77,13 @@ struct dicelang_program dicelang_program_create_from_file(FILE *from_file, alloc
     range_push(RANGE_TO_ANY(new_program.text), &(char) { '\0' });
 
     // tokenizing & creating parse tree
-    tokens = dicelang_tokenize(new_program.text->data, alloc);
-    new_program.parse_tree = dicelang_parse(tokens, alloc);
-    range_destroy_dynamic(alloc, &RANGE_TO_ANY(tokens));
+    tokens = dicelang_tokenize(new_program.text->data, &new_program.error, alloc);
+    dicelang_token_dump(tokens, stdout);
 
+    new_program.parse_tree = dicelang_parse(tokens, &new_program.error, alloc);
     dicelang_parse_node_print(new_program.parse_tree, stdout);
+
+    range_destroy_dynamic(alloc, &RANGE_TO_ANY(tokens));
 
     return new_program;
 }
@@ -127,5 +134,39 @@ void dicelang_token_print(struct dicelang_token token, FILE *to_file)
 
     fprintf(to_file, "`\n");
 }
+
+/**
+ * @brief
+ *
+ * @param err
+ * @param to_file
+ */
+void dicelang_error_print(struct dicelang_error err, FILE *to_file)
+{
+    switch (err.flavour) {
+        case DERR_NONE:
+            fprintf(to_file, "dicelang: no error\n");
+            return;
+        case DERR_TOKEN:
+            fprintf(to_file, "dicelang: reading error\n");
+            break;
+        case DERR_SYNTAX:
+            fprintf(to_file, "dicelang: syntax error\n");
+            break;
+    }
+
+    fprintf(to_file, "at (%d:%d) near token '%s'",
+            err.token.where.line, err.token.where.col,
+            DTOK_DSTX_names[err.token.flavour]);
+    if (err.token.value.source) {
+        fprintf(to_file, " (\"");
+        for (size_t i = 0 ; i < err.token.value.source_length ; i++) {
+            fprintf(to_file, "%c", err.token.value.source[i]);
+        }
+        fprintf(to_file, "\")");
+    }
+    fprintf(to_file, "\n");
+}
+
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------

@@ -22,7 +22,7 @@
 //  ------------------------------------------------------------------------------------------------
 
 // Creates a set of tokens representing the given source code.
-RANGE_TOKEN *dicelang_tokenize(const char *source_code, struct allocator alloc);
+RANGE_TOKEN *dicelang_tokenize(const char *source_code, struct dicelang_error *error_sink, struct allocator alloc);
 // Prints debug token information to some file.
 void dicelang_token_dump(RANGE_TOKEN *tokens, FILE *to_file);
 // Prints one token to a file.

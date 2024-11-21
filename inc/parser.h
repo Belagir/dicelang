@@ -22,8 +22,8 @@ struct dicelang_parse_node {
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------
 
+struct dicelang_parse_node *dicelang_parse(RANGE_TOKEN *tokens, struct dicelang_error *error_sink, allocator alloc);
 void dicelang_parse_node_print(const struct dicelang_parse_node *node, FILE *to_file);
-struct dicelang_parse_node *dicelang_parse(RANGE_TOKEN *tokens, allocator alloc);
 void dicelang_parse_node_destroy(struct dicelang_parse_node **node, struct allocator alloc);
 
 #endif

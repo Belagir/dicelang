@@ -224,7 +224,7 @@ static struct dicelang_token dicelang_token_read(const char **text, u32 line, u3
  * @param[in] alloc Allocator used to create the token range.
  * @return RANGE_TOKEN*
  */
-RANGE_TOKEN *dicelang_tokenize(const char *source_code, struct allocator alloc)
+RANGE_TOKEN *dicelang_tokenize(const char *source_code, struct dicelang_error *error_sink, struct allocator alloc)
 {
     RANGE_TOKEN *read_tokens = nullptr;
     struct dicelang_token tok = { .flavour = DTOK_empty };
@@ -271,6 +271,12 @@ RANGE_TOKEN *dicelang_tokenize(const char *source_code, struct allocator alloc)
             read_tokens = range_ensure_capacity(alloc, RANGE_TO_ANY(read_tokens), 1u);
             range_push(RANGE_TO_ANY(read_tokens), &tok);
         }
+    }
+
+    if (tok.flavour == DTOK_invalid) {
+        error_sink->flavour = DERR_TOKEN;
+        error_sink->token = tok;
+        error_sink->what = "unrecognized token";
     }
 
     return read_tokens;

@@ -61,6 +61,13 @@ enum dicelang_syntax_flavour {
     DSTX_NUMBER,
 };
 
+enum dicelang_error_flavour {
+    DERR_NONE,
+
+    DERR_TOKEN,
+    DERR_SYNTAX,
+};
+
 /**
  * @brief Dicelang token, dependent on some source code.
  */
@@ -78,6 +85,17 @@ struct dicelang_token {
 typedef RANGE(struct dicelang_token) RANGE_TOKEN;
 
 /**
+ * @brief
+ *
+ */
+struct dicelang_error {
+    enum dicelang_error_flavour flavour;
+
+    struct dicelang_token token;
+    const char *what;
+};
+
+/**
  * @brief Contains all the information needed to represent & interpet a dicelang program.
  *
  */
@@ -86,6 +104,8 @@ struct dicelang_program {
     RANGE(const char) *text;
     /** Parse tree generated from the text. */
     struct dicelang_parse_node *parse_tree;
+
+    struct dicelang_error error;
 };
 
 // -------------------------------------------------------------------------------------------------
@@ -101,6 +121,8 @@ extern const char *DTOK_DSTX_names[];
 struct dicelang_program dicelang_program_create_from_file(FILE *from_file, allocator alloc);
 // Releases memory taken by a loaded program.
 void dicelang_program_destroy(struct dicelang_program *program, allocator alloc);
+
+void dicelang_error_print(struct dicelang_error err, FILE *to_file);
 
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------
