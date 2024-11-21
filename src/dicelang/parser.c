@@ -7,40 +7,19 @@
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------
 
-enum parser_element_flavour {
-    PARSER_ELEMENT_func,
-    PARSER_ELEMENT_val,
-};
+static void assignment(RANGE_TOKEN *tokens);
+static void variable  (RANGE_TOKEN *tokens);
+static void expression(RANGE_TOKEN *tokens);
+static void dice      (RANGE_TOKEN *tokens);
+static void factor    (RANGE_TOKEN *tokens);
+static void operand   (RANGE_TOKEN *tokens);
 
-struct parser_element {
-    enum parser_element_flavour flavour;
-    union {
-        size_t (*func)(RANGE_TOKEN *tokens, size_t index);
-        enum dicelang_token_flavour val;
-    };
-};
-
-struct parser_rule {
-    RANGE_TOKEN *tokens;
-    size_t offset;
-    size_t nb_elements;
-    struct parser_element *what;
-};
-
-// -------------------------------------------------------------------------------------------------
-// -------------------------------------------------------------------------------------------------
-
-static size_t assignment(RANGE_TOKEN *tokens, size_t index);
-static size_t variable  (RANGE_TOKEN *tokens, size_t index);
-static size_t expression(RANGE_TOKEN *tokens, size_t index);
-static size_t term      (RANGE_TOKEN *tokens, size_t index);
-static size_t dice      (RANGE_TOKEN *tokens, size_t index);
-static size_t addition  (RANGE_TOKEN *tokens, size_t index);
 
 // -------------------------------------------------------------------------------------------------
 
-static size_t expect(struct parser_rule rule);
-static size_t one_of(size_t nb, struct parser_rule rules[]);
+static bool expect(RANGE_TOKEN *tokens, enum dicelang_token_flavour what);
+static bool accept(RANGE_TOKEN *tokens, enum dicelang_token_flavour what);
+static bool next_is(RANGE_TOKEN *tokens, enum dicelang_token_flavour what);
 
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------
@@ -53,10 +32,7 @@ static size_t one_of(size_t nb, struct parser_rule rules[]);
  */
 void dicelang_parse(RANGE_TOKEN *tokens, struct allocator alloc)
 {
-    printf("%d\n", expect((struct parser_rule) { tokens, 0, 2, (struct parser_element[]) {
-            { PARSER_ELEMENT_func, .func = &assignment },
-            { PARSER_ELEMENT_val, .val   = DTOK_line_end },
-    }}));
+    assignment(tokens);
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -66,182 +42,110 @@ void dicelang_parse(RANGE_TOKEN *tokens, struct allocator alloc)
  * @brief
  *
  * @param tokens
- * @param index
- * @return true
- * @return false
- */
-static size_t assignment(RANGE_TOKEN *tokens, size_t index)
-{
-    return expect((struct parser_rule) { tokens, index, 3, (struct parser_element[]) {
-            { PARSER_ELEMENT_func, .func = &variable },
-            { PARSER_ELEMENT_val, .val   = DTOK_designator },
-            { PARSER_ELEMENT_func, .func = &expression },
-    }});
-}
-
-/**
- * @brief
- *
- * @param tokens
- * @param index
- * @return true
- * @return false
- */
-static size_t variable(RANGE_TOKEN *tokens, size_t index)
-{
-    return expect((struct parser_rule) { tokens, index, 1, (struct parser_element[]) {
-            { PARSER_ELEMENT_val, .val =  DTOK_identifier },
-    }});
-}
-
-/**
- * @brief
- *
- * @param tokens
- * @param index
- * @return true
- * @return false
- */
-static size_t expression(RANGE_TOKEN *tokens, size_t index)
-{
-    return one_of(3, (struct parser_rule[]) {
-            { tokens, index, 1, (struct parser_element[]) {
-                    { PARSER_ELEMENT_func, .func = &addition },
-            }},
-            { tokens, index, 1, (struct parser_element[]) {
-                    { PARSER_ELEMENT_func, .func = &dice },
-            }},
-            { tokens, index, 1, (struct parser_element[]) {
-                    { PARSER_ELEMENT_func, .func = &term },
-            }},
-    });
-}
-
-/**
- * @brief
- *
- * @param tokens
- * @param index
- * @param out_read_tokens
- * @return true
- * @return false
- */
-static size_t term(RANGE_TOKEN *tokens, size_t index)
-{
-    return one_of(2, (struct parser_rule[]) {
-            { tokens, index, 1, (struct parser_element[]) {
-                    { PARSER_ELEMENT_val, .val = DTOK_value },
-            }},
-            { tokens, index, 3, (struct parser_element[]) {
-                    { PARSER_ELEMENT_val, .val   = DTOK_open_parenthesis },
-                    { PARSER_ELEMENT_func, .func = &expression },
-                    { PARSER_ELEMENT_val, .val   = DTOK_close_parenthesis },
-            }},
-    });
-}
-
-/**
- * @brief
- *
- * @param tokens
- * @param index
- * @param out_read_tokens
- * @return true
- * @return false
- */
-static size_t dice(RANGE_TOKEN *tokens, size_t index)
-{
-    return expect((struct parser_rule) { tokens, index, 3, (struct parser_element[]) {
-            { PARSER_ELEMENT_func, .func = &term },
-            { PARSER_ELEMENT_val, .val = DTOK_d },
-            { PARSER_ELEMENT_func, .func = &term },
-    }});
-}
-
-/**
- * @brief
- *
- * @param tokens
- * @param index
- * @return size_t
- */
-static size_t addition(RANGE_TOKEN *tokens, size_t index)
-{
-    return one_of(2, (struct parser_rule[]) {
-            { tokens, index, 3, (struct parser_element[]) {
-                    { PARSER_ELEMENT_func, .func = &dice },
-                    { PARSER_ELEMENT_val, .val = DTOK_addition },
-                    { PARSER_ELEMENT_func, .func = &expression },
-            }},
-            { tokens, index, 3, (struct parser_element[]) {
-                    { PARSER_ELEMENT_func, .func = &term },
-                    { PARSER_ELEMENT_val, .val = DTOK_addition },
-                    { PARSER_ELEMENT_func, .func = &expression },
-            }},
-    });
-}
-// -------------------------------------------------------------------------------------------------
-
-/**
- * @brief
- *
- * @param tokens
- * @param offset
- * @param nb_elements
  * @param what
- * @return u32
+ * @return true
+ * @return false
  */
-static size_t expect(struct parser_rule rule)
+static bool expect(RANGE_TOKEN *tokens, enum dicelang_token_flavour what)
 {
-    size_t pos = 0;
-    size_t read_tokens = 0;
-    size_t all_read_tokens = 0;
-    bool matches = false;
-
-    if (!rule.what || !rule.nb_elements) {
-        return 0;
+    if (accept(tokens, what)) {
+        return true;
     }
-
-    matches = true;
-    while ((pos < rule.nb_elements) && matches) {
-        read_tokens = 0;
-
-        switch (rule.what[pos].flavour) {
-            case PARSER_ELEMENT_func:
-                read_tokens = rule.what[pos].func(rule.tokens, rule.offset + all_read_tokens);
-                break;
-            case PARSER_ELEMENT_val:
-                read_tokens = (rule.what[pos].val == rule.tokens->data[rule.offset + all_read_tokens].flavour);
-                break;
-        }
-        matches = read_tokens > 0;
-
-        pos += 1;
-        all_read_tokens += read_tokens;
-    }
-
-    if (matches) {
-        return all_read_tokens;
-    }
-    return 0;
+    printf("syntax error near %s (%d:%d) : expected %s\n",
+            DTOK_names[tokens->data[0].flavour],
+            tokens->data[0].where.line,
+            tokens->data[0].where.col,
+            DTOK_names[what]);
+    return false;
 }
 
 /**
  * @brief
  *
- * @param nb
- * @param rules
- * @return size_t
+ * @param tokens
+ * @param what
+ * @return true
+ * @return false
  */
-static size_t one_of(size_t nb, struct parser_rule rules[])
+static bool accept(RANGE_TOKEN *tokens, enum dicelang_token_flavour what)
 {
-    size_t all_read_tokens = 0;
-    size_t pos = 0;
+    if (next_is(tokens, what)) {
+        printf("%s\n", DTOK_names[what]);
+        return range_remove(RANGE_TO_ANY(tokens), 0);
+    }
+    return false;
+}
 
-    while ((pos < nb) && (all_read_tokens == 0)) {
-        all_read_tokens = expect(rules[pos]);
-        pos += 1;
+/**
+ * @brief
+ *
+ * @param tokens
+ * @param what
+ * @return true
+ * @return false
+ */
+static bool next_is(RANGE_TOKEN *tokens, enum dicelang_token_flavour what)
+{
+    if (!tokens || !tokens->data || (tokens->length == 0)) {
+        return false;
     }
 
-    return all_read_tokens;
+    return tokens->data[0].flavour == what;
+}
+
+
+// -------------------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------
+
+static void assignment(RANGE_TOKEN *tokens)
+{
+    printf("start -- assignment\n");
+    variable(tokens);
+    expect(tokens, DTOK_designator);
+    expression(tokens);
+    printf("end -- assignment\n");
+}
+
+static void variable(RANGE_TOKEN *tokens)
+{
+    printf("-- variable\n");
+    expect(tokens, DTOK_identifier);
+}
+
+static void expression(RANGE_TOKEN *tokens)
+{
+    printf("start -- expression\n");
+    dice(tokens);
+    while (accept(tokens, DTOK_addition)) {
+        dice(tokens);
+    }
+    printf("end -- expression\n");
+}
+
+static void dice(RANGE_TOKEN *tokens)
+{
+    printf("start -- dice\n");
+    factor(tokens);
+    while (accept(tokens, DTOK_d)) {
+        factor(tokens);
+    }
+    printf("end -- dice\n");
+}
+
+static void factor(RANGE_TOKEN *tokens)
+{
+    operand(tokens);
+}
+
+static void operand(RANGE_TOKEN *tokens)
+{
+    printf("start -- operand\n");
+
+    if (accept(tokens, DTOK_open_parenthesis)) {
+        expression(tokens);
+        expect(tokens, DTOK_close_parenthesis);
+    } else {
+        expect(tokens, DTOK_value);
+    }
+    printf("end -- operand\n");
 }
