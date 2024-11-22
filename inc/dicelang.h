@@ -88,6 +88,18 @@ struct dicelang_token {
 typedef RANGE(struct dicelang_token) RANGE_TOKEN;
 
 /**
+ * @brief Node of a parse tree.
+ * Contains a syntax node linked to a set of children and a parent ;
+ * if the syntax is a terminal one (a token), then the node shouldn't have children.
+ */
+struct dicelang_parse_node {
+    struct dicelang_token token;
+
+    struct dicelang_parse_node *parent;
+    RANGE(struct dicelang_parse_node *) *children;
+};
+
+/**
  * @brief
  *
  */
@@ -124,8 +136,22 @@ extern const char *DTOK_DSTX_names[];
 struct dicelang_program dicelang_program_create_from_file(FILE *from_file, allocator alloc);
 // Releases memory taken by a loaded program.
 void dicelang_program_destroy(struct dicelang_program *program, allocator alloc);
-
+// Prints the curretn error to some file.
 void dicelang_error_print(struct dicelang_error err, FILE *to_file);
+
+// Creates a set of tokens representing the given source code.
+RANGE_TOKEN *dicelang_tokenize(const char *source_code, struct dicelang_error *error_sink, struct allocator alloc);
+// Prints debug token information to some file.
+void dicelang_token_dump(RANGE_TOKEN *tokens, FILE *to_file);
+// Prints one token to a file.
+void dicelang_token_print(struct dicelang_token token, FILE *to_file);
+
+//
+struct dicelang_parse_node *dicelang_parse(RANGE_TOKEN *tokens, struct dicelang_error *error_sink, allocator alloc);
+//
+void dicelang_parse_node_print(const struct dicelang_parse_node *node, FILE *to_file);
+//
+void dicelang_parse_node_destroy(struct dicelang_parse_node **node, struct allocator alloc);
 
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------
