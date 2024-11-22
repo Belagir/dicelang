@@ -235,6 +235,8 @@ RANGE_TOKEN *dicelang_tokenize(const char *source_code, struct dicelang_error *e
     size_t pos = 0u;
 
     if (!source_code) {
+        error_sink->flavour = DERR_INTERNAL;
+        error_sink->what = "Tried to tokenize some source that could not be read.";
         return nullptr;
     }
 

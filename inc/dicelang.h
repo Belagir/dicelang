@@ -64,11 +64,18 @@ enum dicelang_syntax_flavour {
     DSTX_NUMBER,
 };
 
+/**
+ * @brief
+ *
+ */
 enum dicelang_error_flavour {
     DERR_NONE,
 
+    DERR_INTERNAL,
+
     DERR_TOKEN,
     DERR_SYNTAX,
+    DERR_INTERPRET,
 };
 
 /**
@@ -120,6 +127,7 @@ struct dicelang_program {
     /** Parse tree generated from the text. */
     struct dicelang_parse_node *parse_tree;
 
+    /** Current error. Set by functions lexing, parsing and interpreting the script. */
     struct dicelang_error error;
 };
 
@@ -152,6 +160,8 @@ struct dicelang_parse_node *dicelang_parse(RANGE_TOKEN *tokens, struct dicelang_
 void dicelang_parse_node_print(const struct dicelang_parse_node *node, FILE *to_file);
 //
 void dicelang_parse_node_destroy(struct dicelang_parse_node **node, struct allocator alloc);
+
+void dicelang_interpret(struct dicelang_parse_node *tree, struct dicelang_error *error_sink, struct allocator alloc);
 
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------

@@ -78,10 +78,7 @@ struct dicelang_program dicelang_program_create_from_file(FILE *from_file, alloc
 
     // tokenizing & creating parse tree
     tokens = dicelang_tokenize(new_program.text->data, &new_program.error, alloc);
-    dicelang_token_dump(tokens, stdout);
-
     new_program.parse_tree = dicelang_parse(tokens, &new_program.error, alloc);
-    dicelang_parse_node_print(new_program.parse_tree, stdout);
 
     range_destroy_dynamic(alloc, &RANGE_TO_ANY(tokens));
 
@@ -147,6 +144,9 @@ void dicelang_error_print(struct dicelang_error err, FILE *to_file)
         case DERR_NONE:
             fprintf(to_file, "dicelang: no error\n");
             return;
+        case DERR_INTERNAL:
+            fprintf(to_file, "dicelang: huh oh. Internal error: %s !\n", err.what);
+            return;
         case DERR_TOKEN:
             fprintf(to_file, "dicelang: reading error\n");
             break;
@@ -165,7 +165,7 @@ void dicelang_error_print(struct dicelang_error err, FILE *to_file)
         }
         fprintf(to_file, "\")");
     }
-    fprintf(to_file, "\n");
+    fprintf(to_file, "\n%s\n", err.what);
 }
 
 // -------------------------------------------------------------------------------------------------

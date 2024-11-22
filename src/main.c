@@ -9,6 +9,8 @@ int main(int argc, const char *argv[])
     struct dicelang_program program = dicelang_program_create_from_file(f, make_system_allocator());
     fclose(f);
 
+    dicelang_interpret(program.parse_tree, &program.error, make_system_allocator());
+
     dicelang_error_print(program.error, stdout);
 
     dicelang_program_destroy(&program, make_system_allocator());

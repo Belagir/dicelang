@@ -46,6 +46,8 @@ static void expr_set  (RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, 
 struct dicelang_parse_node *dicelang_parse(RANGE_TOKEN *tokens, struct dicelang_error *error_sink, struct allocator alloc)
 {
     if (!tokens || !tokens->data) {
+        error_sink->flavour = DERR_INTERNAL;
+        error_sink->what = "Tried to parse null-ed tokens.";
         return nullptr;
     }
 
