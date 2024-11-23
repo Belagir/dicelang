@@ -19,9 +19,9 @@ OBJ_LIB_DIR = unstandard/build
 EXC_DIR = bin
 
 ## compiler
-CC = gcc
+CC = gcc-13
 ## compilation flags
-CFLAGS += -Wpedantic -g -Werror -fopenmp -std=c23
+CFLAGS += -Wpedantic -g -Werror -fopenmp -std=c2x
 ## linker flags
 LFLAGS += -lm -fopenmp
 
