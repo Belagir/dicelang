@@ -25,9 +25,9 @@ Dicelang is the simplest it can be (or at least tries, dream big little script !
 ### Expressions
 
 *"Scalars"* `R : 4`
-*Dices* `R : 3_d6`
-*Arrays* `R : [1, 2, 1_d20, 3, 4]`
-*Addition & substraction* `R : 3_d6+4`
+*Dices* `R : 3d6`
+*Arrays* `R : [1, 2, 1d20, 3, 4]`
+*Addition & substraction* `R : 3d6+4`
 *Multiplication & division* `R : 5 * [1, 2]`
 *Comparing* `R : 1d20 > [13, 15]`
 
