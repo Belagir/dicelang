@@ -76,17 +76,33 @@ struct dicelang_parse_node *dicelang_parse(RANGE_TOKEN *tokens, struct dicelang_
  * @param[in] node
  * @param[in] to_file
  */
+void dicelang_parse_node_dump(const struct dicelang_parse_node *node, FILE *to_file)
+{
+    if (!node) {
+        return;
+    }
+
+    dicelang_parse_node_print(node, to_file);
+
+    for (size_t i = 0 ; i < node->children->length ; i++) {
+        dicelang_parse_node_dump(node->children->data[i], to_file);
+    }
+}
+
+/**
+ * @brief Recursively prints a parse tree to some file.
+ *
+ * @param[in] node
+ * @param[in] to_file
+ */
 void dicelang_parse_node_print(const struct dicelang_parse_node *node, FILE *to_file)
 {
     if (!node) {
         return;
     }
 
+    fprintf(to_file, "[%d]\t", node->children->length);
     dicelang_token_print(node->token, to_file);
-
-    for (size_t i = 0 ; i < node->children->length ; i++) {
-        dicelang_parse_node_print(node->children->data[i], to_file);
-    }
 }
 
 /**
