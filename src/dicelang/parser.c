@@ -25,12 +25,12 @@ static bool next_is(const RANGE_TOKEN *tokens, enum dicelang_token_flavour what)
 
 // -------------------------------------------------------------------------------------------------
 
-static void assignment(RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, struct dicelang_error *error_sink, struct allocator alloc);
-static void expression(RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, struct dicelang_error *error_sink, struct allocator alloc);
-static void dice      (RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, struct dicelang_error *error_sink, struct allocator alloc);
-static void factor    (RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, struct dicelang_error *error_sink, struct allocator alloc);
-static void operand   (RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, struct dicelang_error *error_sink, struct allocator alloc);
-static void expr_set  (RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, struct dicelang_error *error_sink, struct allocator alloc);
+static void assignment    (RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, struct dicelang_error *error_sink, struct allocator alloc);
+static void addition      (RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, struct dicelang_error *error_sink, struct allocator alloc);
+static void dice          (RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, struct dicelang_error *error_sink, struct allocator alloc);
+static void multiplication(RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, struct dicelang_error *error_sink, struct allocator alloc);
+static void operand       (RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, struct dicelang_error *error_sink, struct allocator alloc);
+static void expr_set      (RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, struct dicelang_error *error_sink, struct allocator alloc);
 
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------
@@ -255,20 +255,20 @@ static void assignment(RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, 
 
     expect(tokens, DTOK_identifier, assignment_node, error_sink, alloc);
     expect(tokens, DTOK_designator, assignment_node, error_sink, alloc);
-    expression(tokens, assignment_node, error_sink, alloc);
+    addition(tokens, assignment_node, error_sink, alloc);
 }
 
 /**
  * @brief
  *
  */
-static void expression(RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, struct dicelang_error *error_sink, struct allocator alloc)
+static void addition(RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, struct dicelang_error *error_sink, struct allocator alloc)
 {
     struct dicelang_parse_node *expression_node = dicelang_parse_node_create(
-            (struct dicelang_token) { .flavour = DSTX_expression, }, parent, alloc);
+            (struct dicelang_token) { .flavour = DSTX_addition, }, parent, alloc);
 
     dice(tokens, expression_node, error_sink, alloc);
-    while (accept(tokens, DTOK_addition, expression_node, alloc) || accept(tokens, DTOK_substraction, expression_node, alloc)) {
+    while (accept(tokens, DTOK_op_addition, expression_node, alloc) || accept(tokens, DTOK_op_substraction, expression_node, alloc)) {
         dice(tokens, expression_node, error_sink, alloc);
     }
 }
@@ -282,9 +282,9 @@ static void dice(RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, struct
     struct dicelang_parse_node *dice_node = dicelang_parse_node_create(
             (struct dicelang_token) { .flavour = DSTX_dice, }, parent, alloc);
 
-    factor(tokens, dice_node, error_sink, alloc);
-    while (accept(tokens, DTOK_d, dice_node, alloc)) {
-        factor(tokens, dice_node, error_sink, alloc);
+    multiplication(tokens, dice_node, error_sink, alloc);
+    while (accept(tokens, DTOK_op_d, dice_node, alloc)) {
+        multiplication(tokens, dice_node, error_sink, alloc);
     }
 }
 
@@ -292,13 +292,13 @@ static void dice(RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, struct
  * @brief
  *
  */
-static void factor(RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, struct dicelang_error *error_sink, struct allocator alloc)
+static void multiplication(RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, struct dicelang_error *error_sink, struct allocator alloc)
 {
     struct dicelang_parse_node *factor_node = dicelang_parse_node_create(
-            (struct dicelang_token) { .flavour = DSTX_factor, }, parent, alloc);
+            (struct dicelang_token) { .flavour = DSTX_multiplication, }, parent, alloc);
 
     operand(tokens, factor_node, error_sink, alloc);
-    while (accept(tokens, DTOK_multiplication, factor_node, alloc) || accept(tokens, DTOK_division, factor_node, alloc)) {
+    while (accept(tokens, DTOK_op_multiplication, factor_node, alloc) || accept(tokens, DTOK_op_division, factor_node, alloc)) {
         operand(tokens, factor_node, error_sink, alloc);
     }
 }
@@ -313,7 +313,7 @@ static void operand(RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, str
             (struct dicelang_token) { .flavour = DSTX_operand, }, parent, alloc);
 
     if (accept(tokens, DTOK_open_parenthesis, operand_node, alloc)) {
-        expression(tokens, operand_node, error_sink, alloc);
+        addition(tokens, operand_node, error_sink, alloc);
         expect(tokens, DTOK_close_parenthesis, operand_node, error_sink, alloc);
 
     } else if (accept(tokens, DTOK_open_sq_bracket, operand_node, alloc)) {
@@ -335,8 +335,8 @@ static void expr_set(RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, st
     struct dicelang_parse_node *expr_set_node = dicelang_parse_node_create(
             (struct dicelang_token) { .flavour = DSTX_expression_set, }, parent, alloc);
 
-    expression(tokens, expr_set_node, error_sink, alloc);
+    addition(tokens, expr_set_node, error_sink, alloc);
     while (accept(tokens, DTOK_separator, expr_set_node, alloc)) {
-        expression(tokens, expr_set_node, error_sink, alloc);
+        addition(tokens, expr_set_node, error_sink, alloc);
     }
 }

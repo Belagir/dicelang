@@ -22,6 +22,8 @@ struct dicelang_interpreter {
     RANGE(struct dicelang_exec_context) *exec_stack;
 };
 
+typedef void (*dicelang_exec_routine)(struct dicelang_interpreter *interpreter, struct dicelang_exec_context *context);
+
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------
 
@@ -29,6 +31,26 @@ static struct dicelang_interpreter dicelang_interpreter_create(size_t start_stac
 static void dicelang_interpreter_destroy(struct dicelang_interpreter *interp, struct allocator alloc);
 static struct dicelang_exec_context *dicelang_interpreter_push_context(struct dicelang_interpreter *interp, struct dicelang_parse_node *node, struct allocator alloc);
 static struct dicelang_exec_context *dicelang_interpreter_pop_context(struct dicelang_interpreter interp);
+
+// -------------------------------------------------------------------------------------------------
+
+static void dicelang_exec_routine_value(struct dicelang_interpreter *interpreter, struct dicelang_exec_context *context);
+static void dicelang_exec_routine_assignment(struct dicelang_interpreter *interpreter, struct dicelang_exec_context *context);
+static void dicelang_exec_routine_addition(struct dicelang_interpreter *interpreter, struct dicelang_exec_context *context);
+static void dicelang_exec_routine_dice(struct dicelang_interpreter *interpreter, struct dicelang_exec_context *context);
+static void dicelang_exec_routine_multiplication(struct dicelang_interpreter *interpreter, struct dicelang_exec_context *context);
+
+// -------------------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------
+
+static const dicelang_exec_routine dicelang_exec_routine_map[DSTX_NUMBER] = {
+        [DTOK_value]      = &dicelang_exec_routine_value,
+
+        [DSTX_assignment] = &dicelang_exec_routine_assignment,
+        [DSTX_addition] = &dicelang_exec_routine_addition,
+        [DSTX_dice]       = &dicelang_exec_routine_dice,
+        [DSTX_multiplication]     = &dicelang_exec_routine_multiplication,
+};
 
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------
@@ -57,7 +79,10 @@ void dicelang_interpret(struct dicelang_parse_node *tree, struct dicelang_error 
             current_context->children_index += 1;
             current_context = next_context;
         } else {
-            dicelang_parse_node_print(current_context->node, stdout);
+            if (dicelang_exec_routine_map[current_context->node->token.flavour]) {
+                dicelang_exec_routine_map[current_context->node->token.flavour](&interpreter, current_context);
+            }
+
             current_context = dicelang_interpreter_pop_context(interpreter);
         }
 
@@ -143,4 +168,38 @@ static struct dicelang_exec_context *dicelang_interpreter_pop_context(struct dic
         return NULL;
     }
     return interp.exec_stack->data + interp.exec_stack->length - 1;
+}
+
+/**
+ * @brief
+ *
+ * @param interpreter
+ * @param context
+ */
+static void dicelang_exec_routine_value(struct dicelang_interpreter *interpreter, struct dicelang_exec_context *context)
+{
+    dicelang_token_print(context->node->token, stdout);
+    printf("pushing value to the stack\n");
+}
+
+static void dicelang_exec_routine_assignment(struct dicelang_interpreter *interpreter, struct dicelang_exec_context *context)
+{
+    dicelang_token_print(context->node->token, stdout);
+    printf("assigning last stack value to variable\n");
+}
+
+static void dicelang_exec_routine_addition(struct dicelang_interpreter *interpreter, struct dicelang_exec_context *context)
+{
+    printf("adding last %d stack value(s)\n", interpreter->values_stack->length - context->values_stack_index);
+
+}
+
+static void dicelang_exec_routine_dice(struct dicelang_interpreter *interpreter, struct dicelang_exec_context *context)
+{
+    printf("dicing last %d stack value(s)\n", interpreter->values_stack->length - context->values_stack_index);
+}
+
+static void dicelang_exec_routine_multiplication(struct dicelang_interpreter *interpreter, struct dicelang_exec_context *context)
+{
+    printf("multiplying last %d stack value(s)\n", interpreter->values_stack->length - context->values_stack_index);
 }

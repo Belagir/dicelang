@@ -18,7 +18,7 @@
 /**
  * @brief Possible tokens that exist in the scripting language.
  *
- * @see parser.h tolookup what makes an "expression", "statement", "variable", "function", "mutator", or "array".
+ * @see parser.h tolookup what makes an "addition", "statement", "variable", "function", "mutator", or "array".
  */
 enum dicelang_token_flavour {
     DTOK_invalid = 0,           ///< Lexer error token to indicate some unrecognized base syntax.
@@ -30,11 +30,11 @@ enum dicelang_token_flavour {
     DTOK_value,                 ///< Integer constant.
     DTOK_value_real,            ///< Real constant.
     DTOK_separator,             ///< Argument or array elements separator.
-    DTOK_addition,              ///< Addition binary operand.
-    DTOK_substraction,          ///< Substraction binary operand.
-    DTOK_multiplication,        ///< Substraction binary operand.
-    DTOK_division,              ///< Substraction binary operand.
-    DTOK_d,                     ///< Dice distribution binary operand.
+    DTOK_op_addition,              ///< Addition binary operand.
+    DTOK_op_substraction,          ///< Substraction binary operand.
+    DTOK_op_multiplication,        ///< Substraction binary operand.
+    DTOK_op_division,              ///< Substraction binary operand.
+    DTOK_op_d,                     ///< Dice distribution binary operand.
     DTOK_designator,            ///< Assignment token to link an expression to a variable.
     DTOK_open_parenthesis,      ///< Token to start either a function call's argument list or to start isolating part of an expression.
     DTOK_close_parenthesis,     ///< Token to finish either a function call's argument list or to finish isolating part of an expression.
@@ -55,9 +55,9 @@ enum dicelang_syntax_flavour {
 
     DSTX_assignment,
     DSTX_variable,
-    DSTX_expression,
+    DSTX_addition,
     DSTX_dice,
-    DSTX_factor,
+    DSTX_multiplication,
     DSTX_operand,
     DSTX_expression_set,
 
