@@ -83,7 +83,7 @@ enum dicelang_error_flavour {
  */
 struct dicelang_token {
     /** Token nature. */
-    enum dicelang_token_flavour flavour;
+    enum dicelang_syntax_flavour flavour;
 
     /** Value information, references the source code. */
     struct { const char *source; size_t source_length; } value;

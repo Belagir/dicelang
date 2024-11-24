@@ -27,7 +27,7 @@ struct dicelang_interpreter {
 
 static struct dicelang_interpreter dicelang_interpreter_create(size_t start_stack_size, size_t start_hashmap_size, struct allocator alloc);
 static void dicelang_interpreter_destroy(struct dicelang_interpreter *interp, struct allocator alloc);
-static struct dicelang_exec_context *dicelang_interpreter_push_context(struct dicelang_interpreter interp, struct dicelang_parse_node *node, struct allocator alloc);
+static struct dicelang_exec_context *dicelang_interpreter_push_context(struct dicelang_interpreter *interp, struct dicelang_parse_node *node, struct allocator alloc);
 static struct dicelang_exec_context *dicelang_interpreter_pop_context(struct dicelang_interpreter interp);
 
 // -------------------------------------------------------------------------------------------------
@@ -48,12 +48,12 @@ void dicelang_interpret(struct dicelang_parse_node *tree, struct dicelang_error 
     bool executing = 0;
 
     interpreter = dicelang_interpreter_create(16, 8, alloc);
-    current_context = dicelang_interpreter_push_context(interpreter, tree, alloc);
+    current_context = dicelang_interpreter_push_context(&interpreter, tree, alloc);
 
     executing = 1;
     do {
         if (current_context->children_index < current_context->node->children->length) {
-            next_context = dicelang_interpreter_push_context(interpreter, current_context->node->children->data[current_context->children_index], alloc);
+            next_context = dicelang_interpreter_push_context(&interpreter, current_context->node->children->data[current_context->children_index], alloc);
             current_context->children_index += 1;
             current_context = next_context;
         } else {
@@ -117,16 +117,16 @@ static void dicelang_interpreter_destroy(struct dicelang_interpreter *interp, st
  * @param node
  * @param alloc
  */
-static struct dicelang_exec_context *dicelang_interpreter_push_context(struct dicelang_interpreter interp, struct dicelang_parse_node *node, struct allocator alloc)
+static struct dicelang_exec_context *dicelang_interpreter_push_context(struct dicelang_interpreter *interp, struct dicelang_parse_node *node, struct allocator alloc)
 {
-    if (!node) {
+    if (!node || !interp) {
         return NULL;
     }
 
-    interp.exec_stack = range_ensure_capacity(alloc, RANGE_TO_ANY(interp.exec_stack), 1);
-    range_push(RANGE_TO_ANY(interp.exec_stack), &(struct dicelang_exec_context) { .node = node, .children_index = 0, .values_stack_index = interp.values_stack->length });
+    interp->exec_stack = range_ensure_capacity(alloc, RANGE_TO_ANY(interp->exec_stack), 1);
+    range_push(RANGE_TO_ANY(interp->exec_stack), &(struct dicelang_exec_context) { .node = node, .children_index = 0, .values_stack_index = interp->values_stack->length });
 
-    return interp.exec_stack->data + (interp.exec_stack->length - 1);
+    return interp->exec_stack->data + (interp->exec_stack->length - 1);
 }
 
 /**
