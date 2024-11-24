@@ -157,10 +157,13 @@ void dicelang_token_print(struct dicelang_token token, FILE *to_file);
 //
 struct dicelang_parse_node *dicelang_parse(RANGE_TOKEN *tokens, struct dicelang_error *error_sink, allocator alloc);
 //
+void dicelang_parse_node_dump(const struct dicelang_parse_node *node, FILE *to_file);
+//
 void dicelang_parse_node_print(const struct dicelang_parse_node *node, FILE *to_file);
 //
 void dicelang_parse_node_destroy(struct dicelang_parse_node **node, struct allocator alloc);
 
+//
 void dicelang_interpret(struct dicelang_parse_node *tree, struct dicelang_error *error_sink, struct allocator alloc);
 
 // -------------------------------------------------------------------------------------------------
