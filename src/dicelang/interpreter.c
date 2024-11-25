@@ -12,6 +12,8 @@ struct dicelang_exec_context {
     struct dicelang_parse_node *node;
 
     size_t children_index;
+
+    size_t children_index;
     size_t values_stack_index;
 };
 
@@ -62,9 +64,19 @@ static const dicelang_exec_routine dicelang_exec_routine_map[DSTX_NUMBER] = {
  * @param error_sink
  * @param alloc
  */
+/**
+ * @brief
+ *
+ * @param tree
+ * @param error_sink
+ * @param alloc
+ */
 void dicelang_interpret(struct dicelang_parse_node *tree, struct dicelang_error *error_sink, struct allocator alloc)
 {
     struct dicelang_interpreter interpreter = { };
+    struct dicelang_exec_context *current_context = NULL;
+    struct dicelang_exec_context *next_context = NULL;
+    bool executing = 0;
     struct dicelang_exec_context *current_context = NULL;
     struct dicelang_exec_context *next_context = NULL;
     bool executing = 0;
@@ -103,6 +115,10 @@ void dicelang_interpret(struct dicelang_parse_node *tree, struct dicelang_error 
  * @param start_hashmap_size
  * @param alloc
  * @return struct dicelang_interpreter
+ * @param start_stack_size
+ * @param start_hashmap_size
+ * @param alloc
+ * @return struct dicelang_interpreter
  */
 static struct dicelang_interpreter dicelang_interpreter_create(size_t start_stack_size, size_t start_hashmap_size, struct allocator alloc)
 {
@@ -120,6 +136,7 @@ static struct dicelang_interpreter dicelang_interpreter_create(size_t start_stac
  * @brief
  *
  * @param interp
+ * @param alloc
  * @param alloc
  */
 static void dicelang_interpreter_destroy(struct dicelang_interpreter *interp, struct allocator alloc)
