@@ -1,11 +1,11 @@
 
+#include "maths/distribution.h"
+
 #include <dicelang.h>
 
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------
 
-struct dicelang_entry { f32 val, weight; };
-struct dicelang_distrib { RANGE(struct dicelang_entry) *values; RANGE(const char *) *formula; };
 struct dicelang_variable { u32 hash; struct dicelang_distrib distr; };
 
 struct dicelang_exec_context {
@@ -178,28 +178,20 @@ static struct dicelang_exec_context *dicelang_interpreter_pop_context(struct dic
  */
 static void dicelang_exec_routine_value(struct dicelang_interpreter *interpreter, struct dicelang_exec_context *context)
 {
-    dicelang_token_print(context->node->token, stdout);
-    printf("pushing value to the stack\n");
 }
 
 static void dicelang_exec_routine_assignment(struct dicelang_interpreter *interpreter, struct dicelang_exec_context *context)
 {
-    dicelang_token_print(context->node->token, stdout);
-    printf("assigning last stack value to variable\n");
 }
 
 static void dicelang_exec_routine_addition(struct dicelang_interpreter *interpreter, struct dicelang_exec_context *context)
 {
-    printf("adding last %d stack value(s)\n", interpreter->values_stack->length - context->values_stack_index);
-
 }
 
 static void dicelang_exec_routine_dice(struct dicelang_interpreter *interpreter, struct dicelang_exec_context *context)
 {
-    printf("dicing last %d stack value(s)\n", interpreter->values_stack->length - context->values_stack_index);
 }
 
 static void dicelang_exec_routine_multiplication(struct dicelang_interpreter *interpreter, struct dicelang_exec_context *context)
 {
-    printf("multiplying last %d stack value(s)\n", interpreter->values_stack->length - context->values_stack_index);
 }

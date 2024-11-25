@@ -2,9 +2,12 @@
 #include <stdio.h>
 
 #include <dicelang.h>
+#include "dicelang/maths/distribution.h"
 
 int main(int argc, const char *argv[])
 {
+    dicelang_distrib_test();
+
     FILE *f = fopen("test_script.dicescript", "r");
     struct dicelang_program program = dicelang_program_create_from_file(f, make_system_allocator());
     fclose(f);
