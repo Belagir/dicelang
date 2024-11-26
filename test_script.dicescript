@@ -1,6 +1,6 @@
 
 # bases
-R : 2 + 3d20 + 1
+R : 2 + 1 + 4 + 3 + 4 + 6
 
 #var : 1d3
 #some_dice : 4d6 + 1 - 1d20

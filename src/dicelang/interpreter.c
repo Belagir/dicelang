@@ -16,6 +16,8 @@ struct dicelang_exec_context {
 };
 
 struct dicelang_interpreter {
+    struct allocator alloc;
+
     RANGE(struct dicelang_variable) *vars_hashmap;
 
     RANGE(struct dicelang_distrib) *values_stack;
@@ -82,6 +84,8 @@ void dicelang_interpret(struct dicelang_parse_node *tree, struct dicelang_error 
     current_context = dicelang_interpreter_push_context(&interpreter, tree, alloc);
 
     if (!current_context) {
+        error_sink->flavour = DERR_INTERNAL;
+        error_sink->what = "interpreter could not init a context to interpret from.";
         return;
     }
 
@@ -124,6 +128,7 @@ void dicelang_interpret(struct dicelang_parse_node *tree, struct dicelang_error 
 static struct dicelang_interpreter dicelang_interpreter_create(size_t start_stack_size, size_t start_hashmap_size, struct allocator alloc)
 {
     struct dicelang_interpreter interp = {
+            .alloc = alloc,
             .vars_hashmap = range_create_dynamic(alloc, sizeof(*interp.vars_hashmap->data), start_hashmap_size),
 
             .values_stack = range_create_dynamic(alloc, sizeof(*interp.values_stack->data), start_stack_size),
@@ -144,6 +149,10 @@ static void dicelang_interpreter_destroy(struct dicelang_interpreter *interp, st
 {
     if (!interp) {
         return;
+    }
+
+    for (size_t i = 0 ; i < interp->values_stack->length ; i++) {
+        dicelang_distrib_destroy(interp->values_stack->data + i, alloc);
     }
 
     range_destroy_dynamic(alloc, &RANGE_TO_ANY(interp->vars_hashmap));
@@ -196,20 +205,45 @@ static struct dicelang_exec_context *dicelang_interpreter_pop_context(struct dic
  */
 static void dicelang_exec_routine_value(struct dicelang_interpreter *interpreter, struct dicelang_exec_context *context)
 {
-    (void) interpreter;
-    (void) context;
+    struct dicelang_distrib new_distrib = dicelang_distrib_create(context->node->token, interpreter->alloc);
+
+    if (!new_distrib.values) {
+        return;
+    }
+
+    interpreter->values_stack = range_ensure_capacity(interpreter->alloc, RANGE_TO_ANY(interpreter->values_stack), 1);
+    range_push(RANGE_TO_ANY(interpreter->values_stack), &new_distrib);
 }
 
 static void dicelang_exec_routine_assignment(struct dicelang_interpreter *interpreter, struct dicelang_exec_context *context)
 {
     (void) interpreter;
     (void) context;
+
+    printf("assigning distribution (%ld values) to token : ", interpreter->values_stack->data[context->values_stack_index].values->length);
+    dicelang_token_print(context->node->token, stdout);
 }
 
+/**
+ * @brief
+ *
+ * @param interpreter
+ * @param context
+ */
 static void dicelang_exec_routine_addition(struct dicelang_interpreter *interpreter, struct dicelang_exec_context *context)
 {
-    (void) interpreter;
-    (void) context;
+    struct dicelang_distrib tmp_distrib = { };
+
+    while (context->values_stack_index + 1 < interpreter->values_stack->length) {
+        tmp_distrib = dicelang_distrib_add(RANGE_LAST(interpreter->values_stack), RANGE_LAST(interpreter->values_stack, -1), interpreter->alloc);
+
+        dicelang_distrib_destroy(&RANGE_LAST(interpreter->values_stack), interpreter->alloc);
+        range_pop(RANGE_TO_ANY(interpreter->values_stack));
+        dicelang_distrib_destroy(&RANGE_LAST(interpreter->values_stack), interpreter->alloc);
+        range_pop(RANGE_TO_ANY(interpreter->values_stack));
+
+        range_push(RANGE_TO_ANY(interpreter->values_stack), &tmp_distrib);
+    }
 }
 
 static void dicelang_exec_routine_dice(struct dicelang_interpreter *interpreter, struct dicelang_exec_context *context)

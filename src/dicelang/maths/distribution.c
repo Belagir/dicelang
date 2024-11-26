@@ -71,26 +71,56 @@ void dicelang_distrib_destroy(struct dicelang_distrib *distrib, struct allocator
  * @param alloc
  * @return * struct dicelang_distrib
  */
-struct dicelang_distrib dicelang_distrib_add(struct dicelang_distrib *lhs, struct dicelang_distrib *rhs, struct allocator alloc)
+struct dicelang_distrib dicelang_distrib_add(struct dicelang_distrib lhs, struct dicelang_distrib rhs, struct allocator alloc)
 {
     struct dicelang_distrib added = { };
 
-    if (!lhs || !lhs->values || !rhs || !rhs->values) {
+    if (!lhs.values || !rhs.values) {
         return (struct dicelang_distrib) { };
     }
 
     added = dicelang_distrib_create_empty(alloc);
 
-    for (size_t i_lhs = 0 ; i_lhs < lhs->values->length ; i_lhs++) {
-        for (size_t i_rhs = 0 ; i_rhs < rhs->values->length ; i_rhs++) {
+    for (size_t i_lhs = 0 ; i_lhs < lhs.values->length ; i_lhs++) {
+        for (size_t i_rhs = 0 ; i_rhs < rhs.values->length ; i_rhs++) {
             dicelang_distrib_push_value(&added,
-                    lhs->values->data[i_lhs].val   + rhs->values->data[i_rhs].val,
-                    lhs->values->data[i_lhs].count + rhs->values->data[i_rhs].count,
+                    lhs.values->data[i_lhs].val   + rhs.values->data[i_rhs].val,
+                    lhs.values->data[i_lhs].count * rhs.values->data[i_rhs].count,
                     alloc);
         }
     }
 
     return added;
+}
+
+/**
+ * @brief
+ *
+ * @param lhs
+ * @param rhs
+ * @param alloc
+ * @return * struct dicelang_distrib
+ */
+struct dicelang_distrib dicelang_distrib_substract(struct dicelang_distrib lhs, struct dicelang_distrib rhs, struct allocator alloc)
+{
+    struct dicelang_distrib diff = { };
+
+    if (!lhs.values || !rhs.values) {
+        return (struct dicelang_distrib) { };
+    }
+
+    diff = dicelang_distrib_create_empty(alloc);
+
+    for (size_t i_lhs = 0 ; i_lhs < lhs.values->length ; i_lhs++) {
+        for (size_t i_rhs = 0 ; i_rhs < rhs.values->length ; i_rhs++) {
+            dicelang_distrib_push_value(&diff,
+                    lhs.values->data[i_lhs].val   - rhs.values->data[i_rhs].val,
+                    lhs.values->data[i_lhs].count * rhs.values->data[i_rhs].count,
+                    alloc);
+        }
+    }
+
+    return diff;
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -277,7 +307,7 @@ tst_CREATE_TEST_SCENARIO(distr_add,
             struct dicelang_distrib mock_distrib_lhs = { .values = (void *) &data->lhs };
             struct dicelang_distrib mock_distrib_rhs = { .values = (void *) &data->rhs };
 
-            struct dicelang_distrib added = dicelang_distrib_add(&mock_distrib_lhs, &mock_distrib_rhs, make_system_allocator());
+            struct dicelang_distrib added = dicelang_distrib_add(mock_distrib_lhs, mock_distrib_rhs, make_system_allocator());
 
             if (!added.values) {
                 tst_assert(false, "addition result has not been allocated");
@@ -302,7 +332,7 @@ tst_CREATE_TEST_CASE(distr_add_nominal, distr_add,
         .lhs = RANGE_CREATE_STATIC(struct dicelang_entry, 6, { { .val = 1, .count = 1 }, { .val = 2, .count = 1 } }),
         .rhs = RANGE_CREATE_STATIC(struct dicelang_entry, 6, { { .val = 1, .count = 1 }, { .val = 2, .count = 1 } }),
 
-        .expected = RANGE_CREATE_STATIC(struct dicelang_entry, 36, { { .val = 2, .count = 2 }, { .val = 3, .count = 4 }, { .val = 4, .count = 2 }, }),
+        .expected = RANGE_CREATE_STATIC(struct dicelang_entry, 36, { { .val = 2, .count = 1 }, { .val = 3, .count = 2 }, { .val = 4, .count = 1 }, }),
 )
 tst_CREATE_TEST_CASE(distr_add_empty_left, distr_add,
         .lhs = RANGE_CREATE_STATIC(struct dicelang_entry, 6, { }),
@@ -322,7 +352,51 @@ tst_CREATE_TEST_CASE(distr_add_empty_empty, distr_add,
 
         .expected = RANGE_CREATE_STATIC(struct dicelang_entry, 36, { }),
 )
+tst_CREATE_TEST_CASE(distr_add_nominal_counted, distr_add,
+        .lhs = RANGE_CREATE_STATIC(struct dicelang_entry, 6, { { .val = 2, .count = 1 }, { .val = 3, .count = 2 }, { .val = 4, .count = 1 } }),
+        .rhs = RANGE_CREATE_STATIC(struct dicelang_entry, 6, { { .val = 1, .count = 1 }, { .val = 2, .count = 1 } }),
 
+        .expected = RANGE_CREATE_STATIC(struct dicelang_entry, 36, { { .val = 3, .count = 1 }, { .val = 4, .count = 3 }, { .val = 5, .count = 3 }, { .val = 6, .count = 1 }, }),
+)
+
+tst_CREATE_TEST_SCENARIO(distr_sub,
+        {
+            RANGE(struct dicelang_entry, 6) lhs;
+            RANGE(struct dicelang_entry, 6) rhs;
+
+            RANGE(struct dicelang_entry, 36) expected;
+        },
+        {
+            struct dicelang_distrib mock_distrib_lhs = { .values = (void *) &data->lhs };
+            struct dicelang_distrib mock_distrib_rhs = { .values = (void *) &data->rhs };
+
+            struct dicelang_distrib diff = dicelang_distrib_substract(mock_distrib_lhs, mock_distrib_rhs, make_system_allocator());
+
+            if (!diff.values) {
+                tst_assert(false, "addition result has not been allocated");
+                return;
+            }
+
+            if (diff.values->length != data->expected.length) {
+                tst_assert_equal(data->expected.length, diff.values->length, "length of %d");
+                return;
+            }
+
+            for (size_t i = 0 ; i < data->expected.length ; i++) {
+                tst_assert(float_equal(data->expected.data[i].val, diff.values->data[i].val, 1), "values mismatch : expected %f, got %f", data->expected.data[i].val, diff.values->data[i].val);
+                tst_assert_equal_ext(data->expected.data[i].count, diff.values->data[i].count, "count of %d", "at index %d", i);
+            }
+
+            dicelang_distrib_destroy(&diff, make_system_allocator());
+        }
+)
+
+tst_CREATE_TEST_CASE(distr_sub_nominal, distr_sub,
+        .lhs = RANGE_CREATE_STATIC(struct dicelang_entry, 6, { { .val = 1, .count = 1 }, { .val = 2, .count = 1 } }),
+        .rhs = RANGE_CREATE_STATIC(struct dicelang_entry, 6, { { .val = 1, .count = 1 }, { .val = 2, .count = 1 } }),
+
+        .expected = RANGE_CREATE_STATIC(struct dicelang_entry, 36, { { .val = -1, .count = 1 }, { .val = 0, .count = 2 }, { .val = 1, .count = 1 }, }),
+)
 
 void dicelang_distrib_test(void)
 {
@@ -340,4 +414,7 @@ void dicelang_distrib_test(void)
     tst_run_test_case(distr_add_empty_left);
     tst_run_test_case(distr_add_empty_right);
     tst_run_test_case(distr_add_empty_empty);
+    tst_run_test_case(distr_add_nominal_counted);
+
+    tst_run_test_case(distr_sub_nominal);
 }
