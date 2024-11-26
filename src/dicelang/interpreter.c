@@ -81,6 +81,10 @@ void dicelang_interpret(struct dicelang_parse_node *tree, struct dicelang_error 
     interpreter = dicelang_interpreter_create(16, 8, alloc);
     current_context = dicelang_interpreter_push_context(&interpreter, tree, alloc);
 
+    if (!current_context) {
+        return;
+    }
+
     executing = 1;
     do {
         if (current_context->children_index < current_context->node->children->length) {

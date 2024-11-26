@@ -371,11 +371,13 @@ static struct dicelang_token dicelang_token_read(const char **text, u32 line, u3
 {
     struct dicelang_token_transition current_transition = dicelang_token_empty_transition;
     struct dicelang_token_transition next_transition = dicelang_token_no_transition;
-    const char *value = *text;
+    const char *value = nullptr;
 
     if(!text || !*text) {
         return (struct dicelang_token) { .flavour = DTOK_invalid, .where = { line, col } };
     }
+
+    value = *text;
 
     do {
         // fetching the eventual transition

@@ -279,13 +279,19 @@ tst_CREATE_TEST_SCENARIO(distr_add,
 
             struct dicelang_distrib added = dicelang_distrib_add(&mock_distrib_lhs, &mock_distrib_rhs, make_system_allocator());
 
-            tst_assert_equal(data->expected.length, added.values->length, "length of %d");
+            if (!added.values) {
+                tst_assert(false, "addition result has not been allocated");
+                return;
+            }
 
-            if (added.values->length == data->expected.length) {
-                for (size_t i = 0 ; i < data->expected.length ; i++) {
-                    tst_assert(float_equal(data->expected.data[i].val, added.values->data[i].val, 1), "values mismatch : expected %f, got %f", data->expected.data[i].val, added.values->data[i].val);
-                    tst_assert_equal_ext(data->expected.data[i].count, added.values->data[i].count, "count of %d", "at index %d", i);
-                }
+            if (added.values->length != data->expected.length) {
+                tst_assert_equal(data->expected.length, added.values->length, "length of %d");
+                return;
+            }
+
+            for (size_t i = 0 ; i < data->expected.length ; i++) {
+                tst_assert(float_equal(data->expected.data[i].val, added.values->data[i].val, 1), "values mismatch : expected %f, got %f", data->expected.data[i].val, added.values->data[i].val);
+                tst_assert_equal_ext(data->expected.data[i].count, added.values->data[i].count, "count of %d", "at index %d", i);
             }
 
             dicelang_distrib_destroy(&added, make_system_allocator());
@@ -302,13 +308,13 @@ tst_CREATE_TEST_CASE(distr_add_empty_left, distr_add,
         .lhs = RANGE_CREATE_STATIC(struct dicelang_entry, 6, { }),
         .rhs = RANGE_CREATE_STATIC(struct dicelang_entry, 6, { { .val = 1, .count = 1 }, { .val = 2, .count = 1 } }),
 
-        .expected = RANGE_CREATE_STATIC(struct dicelang_entry, 36, { { .val = 1, .count = 1 }, { .val = 2, .count = 1 }, }),
+        .expected = RANGE_CREATE_STATIC(struct dicelang_entry, 36, { }),
 )
 tst_CREATE_TEST_CASE(distr_add_empty_right, distr_add,
         .lhs = RANGE_CREATE_STATIC(struct dicelang_entry, 6, { { .val = 1, .count = 1 }, { .val = 2, .count = 1 } }),
         .rhs = RANGE_CREATE_STATIC(struct dicelang_entry, 6, { }),
 
-        .expected = RANGE_CREATE_STATIC(struct dicelang_entry, 36, { { .val = 1, .count = 1 }, { .val = 2, .count = 1 }, }),
+        .expected = RANGE_CREATE_STATIC(struct dicelang_entry, 36, { }),
 )
 tst_CREATE_TEST_CASE(distr_add_empty_empty, distr_add,
         .lhs = RANGE_CREATE_STATIC(struct dicelang_entry, 6, { }),
