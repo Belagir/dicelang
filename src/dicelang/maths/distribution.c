@@ -87,7 +87,6 @@ struct dicelang_distrib dicelang_distrib_add(struct dicelang_distrib *lhs, struc
                     lhs->values->data[i_lhs].val   + rhs->values->data[i_rhs].val,
                     lhs->values->data[i_lhs].count + rhs->values->data[i_rhs].count,
                     alloc);
-            printf("%d:%d ; (%d %d) + (%d %d)\n", i_lhs, i_rhs, lhs->values->data[i_lhs].val, lhs->values->data[i_lhs].count, rhs->values->data[i_rhs].val, rhs->values->data[i_rhs].count);
         }
     }
 
@@ -172,7 +171,7 @@ static void dicelang_distrib_push_value(struct dicelang_distrib *target, f32 val
 {
     size_t index = 0;
 
-    if (!target || (count = 0)) {
+    if (!target || (count == 0)) {
         return;
     }
 
@@ -278,37 +277,44 @@ tst_CREATE_TEST_SCENARIO(distr_add,
             struct dicelang_distrib mock_distrib_lhs = { .values = (void *) &data->lhs };
             struct dicelang_distrib mock_distrib_rhs = { .values = (void *) &data->rhs };
 
-            for (size_t i = 0 ; i < mock_distrib_lhs.values->length ; i++) {
-                printf("lhs[%d]: %d %d\n", i, mock_distrib_lhs.values->data[i].val, mock_distrib_lhs.values->data[i].count);
+            struct dicelang_distrib added = dicelang_distrib_add(&mock_distrib_lhs, &mock_distrib_rhs, make_system_allocator());
+
+            tst_assert_equal(data->expected.length, added.values->length, "length of %d");
+
+            if (added.values->length == data->expected.length) {
+                for (size_t i = 0 ; i < data->expected.length ; i++) {
+                    tst_assert(float_equal(data->expected.data[i].val, added.values->data[i].val, 1), "values mismatch : expected %f, got %f", data->expected.data[i].val, added.values->data[i].val);
+                    tst_assert_equal_ext(data->expected.data[i].count, added.values->data[i].count, "count of %d", "at index %d", i);
+                }
             }
-            for (size_t i = 0 ; i < mock_distrib_rhs.values->length ; i++) {
-                printf("rhs[%d]: %d %d\n", i, mock_distrib_rhs.values->data[i].val, mock_distrib_rhs.values->data[i].count);
-            }
-            for (size_t i = 0 ; i < data->expected.length ; i++) {
-                printf("expected[%d]: %d %d\n", i, data->expected.data[i].val, data->expected.data[i].count);
-            }
 
-            // struct dicelang_distrib added = dicelang_distrib_add(&mock_distrib_lhs, &mock_distrib_rhs, make_system_allocator());
-
-            // tst_assert_equal(added.values->length, data->expected.length, "length of %d");
-
-            // if (added.values->length == data->expected.length) {
-            //     for (size_t i = 0 ; i < data->expected.length ; i++) {
-            //         tst_assert_equal_ext(data->expected.data[i].val, added.values->data[i].val, "value of %d", "at index %d", i);
-            //         tst_assert_equal_ext(data->expected.data[i].count, added.values->data[i].count, "count of %d", "at index %d", i);
-            //         printf("-> %d, %d\n", data->expected.data[i].val, data->expected.data[i].count);
-            //     }
-            // }
-
-            // dicelang_distrib_destroy(&added, make_system_allocator());
+            dicelang_distrib_destroy(&added, make_system_allocator());
         }
 )
 
 tst_CREATE_TEST_CASE(distr_add_nominal, distr_add,
-        .lhs = RANGE_CREATE_STATIC(struct dicelang_entry, 6, { .val = 1, .count = 1 }, { { .val = 2, .count = 1 } }),
-        .rhs = RANGE_CREATE_STATIC(struct dicelang_entry, 6, { .val = 1, .count = 1 }, { { .val = 2, .count = 1 } }),
+        .lhs = RANGE_CREATE_STATIC(struct dicelang_entry, 6, { { .val = 1, .count = 1 }, { .val = 2, .count = 1 } }),
+        .rhs = RANGE_CREATE_STATIC(struct dicelang_entry, 6, { { .val = 1, .count = 1 }, { .val = 2, .count = 1 } }),
 
-        .expected = RANGE_CREATE_STATIC(struct dicelang_entry, 36, { { .val = 2, .count = 1 }, { .val = 3, .count = 2 }, { .val = 4, .count = 1 }, }),
+        .expected = RANGE_CREATE_STATIC(struct dicelang_entry, 36, { { .val = 2, .count = 2 }, { .val = 3, .count = 4 }, { .val = 4, .count = 2 }, }),
+)
+tst_CREATE_TEST_CASE(distr_add_empty_left, distr_add,
+        .lhs = RANGE_CREATE_STATIC(struct dicelang_entry, 6, { }),
+        .rhs = RANGE_CREATE_STATIC(struct dicelang_entry, 6, { { .val = 1, .count = 1 }, { .val = 2, .count = 1 } }),
+
+        .expected = RANGE_CREATE_STATIC(struct dicelang_entry, 36, { { .val = 1, .count = 1 }, { .val = 2, .count = 1 }, }),
+)
+tst_CREATE_TEST_CASE(distr_add_empty_right, distr_add,
+        .lhs = RANGE_CREATE_STATIC(struct dicelang_entry, 6, { { .val = 1, .count = 1 }, { .val = 2, .count = 1 } }),
+        .rhs = RANGE_CREATE_STATIC(struct dicelang_entry, 6, { }),
+
+        .expected = RANGE_CREATE_STATIC(struct dicelang_entry, 36, { { .val = 1, .count = 1 }, { .val = 2, .count = 1 }, }),
+)
+tst_CREATE_TEST_CASE(distr_add_empty_empty, distr_add,
+        .lhs = RANGE_CREATE_STATIC(struct dicelang_entry, 6, { }),
+        .rhs = RANGE_CREATE_STATIC(struct dicelang_entry, 6, { }),
+
+        .expected = RANGE_CREATE_STATIC(struct dicelang_entry, 36, { }),
 )
 
 
@@ -325,4 +331,7 @@ void dicelang_distrib_test(void)
     tst_run_test_case(bytes_to_f32_dot);
 
     tst_run_test_case(distr_add_nominal);
+    tst_run_test_case(distr_add_empty_left);
+    tst_run_test_case(distr_add_empty_right);
+    tst_run_test_case(distr_add_empty_empty);
 }

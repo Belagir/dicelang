@@ -116,7 +116,7 @@ void dicelang_token_print(struct dicelang_token token, FILE *to_file)
     }
 
     // printing token info
-    fprintf(to_file, "(%d:%d)\t%c%- 20s`",
+    fprintf(to_file, "(%d:%d)\t%c%-20s`",
             token.where.line,
             token.where.col,
             (token.flavour < DTOK_NUMBER)? '*' : ' ',
@@ -152,6 +152,9 @@ void dicelang_error_print(struct dicelang_error err, FILE *to_file)
             break;
         case DERR_SYNTAX:
             fprintf(to_file, "dicelang: syntax error\n");
+            break;
+        case DERR_INTERPRET:
+            fprintf(to_file, "dicelang: interpreter error\n");
             break;
     }
 

@@ -12,8 +12,6 @@ struct dicelang_exec_context {
     struct dicelang_parse_node *node;
 
     size_t children_index;
-
-    size_t children_index;
     size_t values_stack_index;
 };
 
@@ -77,9 +75,8 @@ void dicelang_interpret(struct dicelang_parse_node *tree, struct dicelang_error 
     struct dicelang_exec_context *current_context = NULL;
     struct dicelang_exec_context *next_context = NULL;
     bool executing = 0;
-    struct dicelang_exec_context *current_context = NULL;
-    struct dicelang_exec_context *next_context = NULL;
-    bool executing = 0;
+
+    (void) error_sink;
 
     interpreter = dicelang_interpreter_create(16, 8, alloc);
     current_context = dicelang_interpreter_push_context(&interpreter, tree, alloc);
@@ -195,20 +192,30 @@ static struct dicelang_exec_context *dicelang_interpreter_pop_context(struct dic
  */
 static void dicelang_exec_routine_value(struct dicelang_interpreter *interpreter, struct dicelang_exec_context *context)
 {
+    (void) interpreter;
+    (void) context;
 }
 
 static void dicelang_exec_routine_assignment(struct dicelang_interpreter *interpreter, struct dicelang_exec_context *context)
 {
+    (void) interpreter;
+    (void) context;
 }
 
 static void dicelang_exec_routine_addition(struct dicelang_interpreter *interpreter, struct dicelang_exec_context *context)
 {
+    (void) interpreter;
+    (void) context;
 }
 
 static void dicelang_exec_routine_dice(struct dicelang_interpreter *interpreter, struct dicelang_exec_context *context)
 {
+    (void) interpreter;
+    (void) context;
 }
 
 static void dicelang_exec_routine_multiplication(struct dicelang_interpreter *interpreter, struct dicelang_exec_context *context)
 {
+    (void) interpreter;
+    (void) context;
 }

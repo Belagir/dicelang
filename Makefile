@@ -21,7 +21,7 @@ EXC_DIR = bin
 ## compiler
 CC = gcc-13
 ## compilation flags
-CFLAGS += -Wpedantic -g -Werror -fopenmp -std=c2x
+CFLAGS += -Wall -Wextra -Wpedantic -g -Werror -fopenmp -std=c2x
 ## linker flags
 LFLAGS += -lm -fopenmp
 

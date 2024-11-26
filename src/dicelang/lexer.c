@@ -285,7 +285,6 @@ RANGE_TOKEN *dicelang_tokenize(const char *source_code, struct dicelang_error *e
     struct dicelang_token tok = { .flavour = DTOK_empty };
     u32 line = 1u;
     u32 col = 1u;
-    size_t pos = 0u;
 
     if (!source_code) {
         error_sink->flavour = DERR_INTERNAL;
@@ -348,7 +347,7 @@ RANGE_TOKEN *dicelang_tokenize(const char *source_code, struct dicelang_error *e
  */
 void dicelang_token_dump(RANGE_TOKEN *tokens, FILE *to_file)
 {
-    if (!tokens || !tokens->data) {
+    if (!tokens) {
         return;
     }
 
@@ -380,7 +379,7 @@ static struct dicelang_token dicelang_token_read(const char **text, u32 line, u3
 
     do {
         // fetching the eventual transition
-        next_transition = dicelang_token_definitions[**text][current_transition.to];
+        next_transition = dicelang_token_definitions[(size_t) **text][current_transition.to];
 
         // no transition exists, we are either at the end of a valid token (.is_endpoint is set) or a syntax error occurred.
         if (next_transition.to == DTOK_invalid) {

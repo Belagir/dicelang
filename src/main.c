@@ -6,6 +6,9 @@
 
 int main(int argc, const char *argv[])
 {
+    (void) argc;
+    (void) argv;
+
     dicelang_distrib_test();
 
     FILE *f = fopen("test_script.dicescript", "r");

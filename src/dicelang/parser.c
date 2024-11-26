@@ -45,7 +45,7 @@ static void expr_set      (RANGE_TOKEN *tokens, struct dicelang_parse_node *pare
  */
 struct dicelang_parse_node *dicelang_parse(RANGE_TOKEN *tokens, struct dicelang_error *error_sink, struct allocator alloc)
 {
-    if (!tokens || !tokens->data) {
+    if (!tokens) {
         error_sink->flavour = DERR_INTERNAL;
         error_sink->what = "Tried to parse null-ed tokens.";
         return nullptr;
@@ -101,7 +101,7 @@ void dicelang_parse_node_print(const struct dicelang_parse_node *node, FILE *to_
         return;
     }
 
-    fprintf(to_file, "[%d]\t", node->children->length);
+    fprintf(to_file, "[%ld]\t", node->children->length);
     dicelang_token_print(node->token, to_file);
 }
 
@@ -189,7 +189,7 @@ static bool expect(RANGE_TOKEN *tokens, enum dicelang_token_flavour what, struct
     }
 
     error_sink->flavour = DERR_SYNTAX;
-    if (tokens && tokens->data && (tokens->length > 0)) {
+    if (tokens && (tokens->length > 0)) {
         error_sink->token = tokens->data[0];
         error_sink->what = "unexpected token";
     } else {
@@ -214,10 +214,11 @@ static bool expect(RANGE_TOKEN *tokens, enum dicelang_token_flavour what, struct
  */
 static bool accept(RANGE_TOKEN *tokens, enum dicelang_token_flavour what, struct dicelang_parse_node *parent, struct allocator alloc)
 {
-    struct dicelang_parse_node *new_node = nullptr;
-
     if (parent && next_is(tokens, what)) {
-        if (parent) new_node = dicelang_parse_node_create(tokens->data[0], parent, alloc);
+        if (parent) {
+            (void) dicelang_parse_node_create(tokens->data[0], parent, alloc);
+        }
+
         return range_remove(RANGE_TO_ANY(tokens), 0);
     }
     return false;
@@ -233,7 +234,7 @@ static bool accept(RANGE_TOKEN *tokens, enum dicelang_token_flavour what, struct
  */
 static bool next_is(const RANGE_TOKEN *tokens, enum dicelang_token_flavour what)
 {
-    if (!tokens || !tokens->data || (tokens->length == 0)) {
+    if (!tokens || (tokens->length == 0)) {
         return false;
     }
 

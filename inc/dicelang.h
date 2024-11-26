@@ -43,16 +43,7 @@ enum dicelang_token_flavour {
     DTOK_open_sq_bracket,       ///< Token to start either an array access or to start an array declaration.
     DTOK_close_sq_bracket,      ///< Token to finish either an array access or to finish an array declaration.
 
-    DTOK_NUMBER,                ///< Meta enum member to have a count the number of other members.
-};
-
-/**
- * @brief Extension of the dicelang_token_flavour enum. Represents non-terminal syntax.
- *
- */
-enum dicelang_syntax_flavour {
-    DSTX_program = DTOK_NUMBER,
-
+    DSTX_program,
     DSTX_assignment,
     DSTX_variable,
     DSTX_addition,
@@ -61,8 +52,10 @@ enum dicelang_syntax_flavour {
     DSTX_operand,
     DSTX_expression_set,
 
-    DSTX_NUMBER,
+    DSTX_NUMBER,                ///< Meta enum member to have a count the number of other members.
 };
+
+#define DTOK_NUMBER (DSTX_program)
 
 /**
  * @brief
@@ -83,7 +76,7 @@ enum dicelang_error_flavour {
  */
 struct dicelang_token {
     /** Token nature. */
-    enum dicelang_syntax_flavour flavour;
+    enum dicelang_token_flavour flavour;
 
     /** Value information, references the source code. */
     struct { const char *source; size_t source_length; } value;
