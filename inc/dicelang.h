@@ -47,7 +47,7 @@ enum dicelang_token_flavour {
     DSTX_statement,
     DSTX_function_call,
     DSTX_assignment,
-    DSTX_variable,
+    DSTX_variable_access,
     DSTX_addition,
     DSTX_dice,
     DSTX_multiplication,

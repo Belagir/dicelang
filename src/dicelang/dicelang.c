@@ -37,7 +37,7 @@ const char *DTOK_DSTX_names[DSTX_NUMBER] = {
 
         [DSTX_program]            = "program",
         [DSTX_assignment]         = "assignment",
-        [DSTX_variable]           = "variable",
+        [DSTX_variable_access]           = "variable",
         [DSTX_addition]         = "addition",
         [DSTX_dice]               = "dice",
         [DSTX_multiplication]             = "multiplication",

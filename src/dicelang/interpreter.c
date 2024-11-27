@@ -8,6 +8,10 @@
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------
 
+/**
+ * @brief
+ *
+ */
 struct dicelang_exec_context {
     struct dicelang_parse_node *node;
 
@@ -15,6 +19,10 @@ struct dicelang_exec_context {
     size_t values_stack_index;
 };
 
+/**
+ * @brief
+ *
+ */
 struct dicelang_interpreter {
     struct allocator alloc;
 
@@ -25,6 +33,10 @@ struct dicelang_interpreter {
     RANGE(struct dicelang_exec_context) *exec_stack;
 };
 
+/**
+ * @brief
+ *
+ */
 typedef void (*dicelang_exec_routine)(struct dicelang_interpreter *interpreter, struct dicelang_exec_context *context);
 
 // -------------------------------------------------------------------------------------------------
@@ -43,19 +55,11 @@ static void dicelang_exec_routine_addition(struct dicelang_interpreter *interpre
 static void dicelang_exec_routine_dice(struct dicelang_interpreter *interpreter, struct dicelang_exec_context *context);
 static void dicelang_exec_routine_multiplication(struct dicelang_interpreter *interpreter, struct dicelang_exec_context *context);
 static void dicelang_exec_routine_function_call(struct dicelang_interpreter *interpreter, struct dicelang_exec_context *context);
+static void dicelang_exec_routine_variable_access(struct dicelang_interpreter *interpreter, struct dicelang_exec_context *context);
 
 // -------------------------------------------------------------------------------------------------
-// -------------------------------------------------------------------------------------------------
 
-static const dicelang_exec_routine dicelang_exec_routine_map[DSTX_NUMBER] = {
-        [DTOK_value]      = &dicelang_exec_routine_value,
-
-        [DSTX_assignment]     = &dicelang_exec_routine_assignment,
-        [DSTX_addition]       = &dicelang_exec_routine_addition,
-        [DSTX_dice]           = &dicelang_exec_routine_dice,
-        [DSTX_multiplication] = &dicelang_exec_routine_multiplication,
-        [DSTX_function_call]  = &dicelang_exec_routine_function_call,
-};
+static void dicelang_builtin_print(struct dicelang_distrib *input, struct dicelang_distrib *output, struct allocator alloc);
 
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------
@@ -63,10 +67,21 @@ static const dicelang_exec_routine dicelang_exec_routine_map[DSTX_NUMBER] = {
 /**
  * @brief
  *
- * @param tree
- * @param error_sink
- * @param alloc
  */
+static const dicelang_exec_routine dicelang_exec_routine_map[DSTX_NUMBER] = {
+        [DTOK_value]      = &dicelang_exec_routine_value,
+
+        [DSTX_assignment]       = &dicelang_exec_routine_assignment,
+        [DSTX_addition]         = &dicelang_exec_routine_addition,
+        [DSTX_dice]             = &dicelang_exec_routine_dice,
+        [DSTX_multiplication]   = &dicelang_exec_routine_multiplication,
+        [DSTX_function_call]    = &dicelang_exec_routine_function_call,
+        [DSTX_variable_access]  = &dicelang_exec_routine_variable_access,
+};
+
+// -------------------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------
+
 /**
  * @brief
  *
@@ -84,7 +99,9 @@ void dicelang_interpret(struct dicelang_parse_node *tree, struct dicelang_error 
     (void) error_sink;
 
     interpreter = dicelang_interpreter_create(16, 8, alloc);
+
     current_context = dicelang_interpreter_push_context(&interpreter, tree, alloc);
+    dicelang_function_map_set(&interpreter.functions, "print", 5, &dicelang_builtin_print, 1, alloc);
 
     if (!current_context) {
         error_sink->flavour = DERR_INTERNAL;
@@ -119,10 +136,6 @@ void dicelang_interpret(struct dicelang_parse_node *tree, struct dicelang_error 
 /**
  * @brief
  *
- * @param start_stack_size
- * @param start_hashmap_size
- * @param alloc
- * @return struct dicelang_interpreter
  * @param start_stack_size
  * @param start_hashmap_size
  * @param alloc
@@ -204,6 +217,9 @@ static struct dicelang_exec_context *dicelang_interpreter_pop_context(struct dic
     return interp.exec_stack->data + interp.exec_stack->length - 1;
 }
 
+// -------------------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------
+
 /**
  * @brief
  *
@@ -283,10 +299,51 @@ static void dicelang_exec_routine_multiplication(struct dicelang_interpreter *in
     (void) context;
 }
 
+/**
+ * @brief
+ *
+ */
 static void dicelang_exec_routine_function_call(struct dicelang_interpreter *interpreter, struct dicelang_exec_context *context)
 {
     (void) interpreter;
 
-    printf("calling function");
-    dicelang_parse_node_dump(context->node, stdout);
+    struct dicelang_token indentifier = { };
+
+    if (context->node->children->length == 0) {
+        return;
+    }
+
+    indentifier = context->node->children->data[0]->token;
+    printf("calling function ");
+    dicelang_token_print(indentifier, stdout);
+}
+
+/**
+ * @brief
+ *
+ */
+static void dicelang_exec_routine_variable_access(struct dicelang_interpreter *interpreter, struct dicelang_exec_context *context)
+{
+    (void) interpreter;
+
+    struct dicelang_token indentifier = { };
+
+    if (context->node->children->length == 0) {
+        return;
+    }
+
+    indentifier = context->node->children->data[0]->token;
+    printf("accessing variable ");
+    dicelang_token_print(indentifier, stdout);
+}
+
+// -------------------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------
+
+static void dicelang_builtin_print(struct dicelang_distrib *input, struct dicelang_distrib *output, struct allocator alloc)
+{
+    (void) output;
+    (void) alloc;
+
+    printf("printing a distribution of %ld values\n", input->values->length);
 }

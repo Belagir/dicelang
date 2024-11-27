@@ -33,6 +33,7 @@ static void dice          (RANGE_TOKEN *tokens, struct dicelang_parse_node *pare
 static void multiplication(RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, struct dicelang_error *error_sink, struct allocator alloc);
 static void operand       (RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, struct dicelang_error *error_sink, struct allocator alloc);
 static void expr_set      (RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, struct dicelang_error *error_sink, struct allocator alloc);
+static void var_access    (RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, struct dicelang_error *error_sink, struct allocator alloc);
 
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------
@@ -348,7 +349,7 @@ static void operand(RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, str
 
     } else if (accept(tokens, DTOK_value, operand_node, alloc)) {
     } else {
-        expect(tokens, DTOK_identifier, operand_node, error_sink, alloc);
+        var_access(tokens, operand_node, error_sink, alloc);
     }
 }
 
@@ -365,4 +366,12 @@ static void expr_set(RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, st
     while (accept(tokens, DTOK_separator, expr_set_node, alloc)) {
         addition(tokens, expr_set_node, error_sink, alloc);
     }
+}
+
+static void var_access(RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, struct dicelang_error *error_sink, struct allocator alloc)
+{
+    struct dicelang_parse_node *var_node = dicelang_parse_node_create(
+            (struct dicelang_token) { .flavour = DSTX_variable_access, }, parent, alloc);
+
+    expect(tokens, DTOK_identifier, var_node, error_sink, alloc);
 }
