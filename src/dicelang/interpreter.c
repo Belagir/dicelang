@@ -59,7 +59,7 @@ static void dicelang_exec_routine_variable_access(struct dicelang_interpreter *i
 
 // -------------------------------------------------------------------------------------------------
 
-static void dicelang_builtin_print(struct dicelang_distrib *input, struct dicelang_distrib *output, struct allocator alloc);
+static void dicelang_builtin_print(struct dicelang_distrib *input, struct dicelang_distrib **output, struct allocator alloc);
 
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------
@@ -305,17 +305,23 @@ static void dicelang_exec_routine_multiplication(struct dicelang_interpreter *in
  */
 static void dicelang_exec_routine_function_call(struct dicelang_interpreter *interpreter, struct dicelang_exec_context *context)
 {
-    (void) interpreter;
-
     struct dicelang_token indentifier = { };
+    struct dicelang_function called = { };
 
     if (context->node->children->length == 0) {
         return;
     }
 
     indentifier = context->node->children->data[0]->token;
-    printf("calling function ");
-    dicelang_token_print(indentifier, stdout);
+
+    if (dicelang_function_map_get(interpreter->functions, indentifier.value.source, indentifier.value.source_length, &called)) {
+
+        if (called.nb_args != (interpreter->values_stack->length - context->values_stack_index)) {
+            return;
+        }
+
+        called.func_impl(interpreter->values_stack->data + context->values_stack_index, NULL, interpreter->alloc);
+    }
 }
 
 /**
@@ -327,23 +333,28 @@ static void dicelang_exec_routine_variable_access(struct dicelang_interpreter *i
     (void) interpreter;
 
     struct dicelang_token indentifier = { };
+    struct dicelang_distrib var_value = { };
 
     if (context->node->children->length == 0) {
         return;
     }
 
     indentifier = context->node->children->data[0]->token;
-    printf("accessing variable ");
-    dicelang_token_print(indentifier, stdout);
+
+    if (dicelang_variable_map_get(interpreter->variables, indentifier.value.source, indentifier.value.source_length, &var_value, interpreter->alloc)) {
+        range_push(RANGE_TO_ANY(interpreter->values_stack), &var_value);
+    }
 }
 
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------
 
-static void dicelang_builtin_print(struct dicelang_distrib *input, struct dicelang_distrib *output, struct allocator alloc)
+static void dicelang_builtin_print(struct dicelang_distrib *input, struct dicelang_distrib **output, struct allocator alloc)
 {
     (void) output;
     (void) alloc;
 
-    printf("printing a distribution of %ld values\n", input->values->length);
+    for (size_t i = 0 ; i < input->values->length ; i++) {
+        printf("%f\t%d\n", input->values->data[i].val, input->values->data[i].count);
+    }
 }

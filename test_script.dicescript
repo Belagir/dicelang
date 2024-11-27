@@ -1,6 +1,7 @@
 
 # bases
 R : 2 + 1 + 4 + 3 + 4 + 6
+print(R + 4)
 print(R)
 
 #var : 1d3

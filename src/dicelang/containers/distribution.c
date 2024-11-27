@@ -49,6 +49,21 @@ struct dicelang_distrib dicelang_distrib_create(struct dicelang_token token, str
 /**
  * @brief
  *
+ * @param from
+ * @param alloc
+ * @return
+ */
+struct dicelang_distrib dicelang_distrib_copy(struct dicelang_distrib from, struct allocator alloc)
+{
+    struct dicelang_distrib new_distrib = { };
+    new_distrib.values = range_create_dynamic_from_copy_of(alloc, RANGE_TO_ANY(from.values));
+
+    return new_distrib;
+}
+
+/**
+ * @brief
+ *
  * @param distrib
  * @param alloc
  */

@@ -32,7 +32,7 @@ struct dicelang_variable_map {
 struct dicelang_variable_map dicelang_variable_map_create(size_t size, struct allocator alloc);
 void dicelang_variable_map_destroy(struct dicelang_variable_map *map, struct allocator alloc);
 
-bool dicelang_variable_map_get(struct dicelang_variable_map map, const char *name, size_t len_name, struct dicelang_distrib *out_val);
+bool dicelang_variable_map_get(struct dicelang_variable_map map, const char *name, size_t len_name, struct dicelang_distrib *out_val, struct allocator alloc);
 bool dicelang_variable_map_set(struct dicelang_variable_map *map, const char *name, size_t len_name, struct dicelang_distrib *new_val, struct allocator alloc);
 
 #endif

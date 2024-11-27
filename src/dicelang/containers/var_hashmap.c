@@ -54,7 +54,7 @@ void dicelang_variable_map_destroy(struct dicelang_variable_map *map, struct all
  * @return struct dicelang_distrib
  */
 
-bool dicelang_variable_map_get(struct dicelang_variable_map map, const char *name, size_t len_name, struct dicelang_distrib *out_val)
+bool dicelang_variable_map_get(struct dicelang_variable_map map, const char *name, size_t len_name, struct dicelang_distrib *out_val, struct allocator alloc)
 {
     u32 hash = 0;
     size_t pos = 0;
@@ -66,7 +66,7 @@ bool dicelang_variable_map_get(struct dicelang_variable_map map, const char *nam
     hash = hash_jenkins_one_at_a_time((const byte *) name, len_name, 0);
 
     if (sorted_range_find_in(RANGE_TO_ANY(map.vars), &hash_compare, &hash, &pos)) {
-        *out_val = map.vars->data[pos].val;
+        *out_val = dicelang_distrib_copy(map.vars->data[pos].val, alloc);
         return true;
     }
 

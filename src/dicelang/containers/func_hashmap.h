@@ -9,7 +9,7 @@
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------
 
-typedef void (*dicelang_script_func)(struct dicelang_distrib *input, struct dicelang_distrib *output, struct allocator alloc);
+typedef void (*dicelang_script_func)(struct dicelang_distrib *input, struct dicelang_distrib **output, struct allocator alloc);
 
 /**
  * @brief
