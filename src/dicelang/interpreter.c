@@ -40,6 +40,7 @@ static void dicelang_exec_routine_assignment(struct dicelang_interpreter *interp
 static void dicelang_exec_routine_addition(struct dicelang_interpreter *interpreter, struct dicelang_exec_context *context);
 static void dicelang_exec_routine_dice(struct dicelang_interpreter *interpreter, struct dicelang_exec_context *context);
 static void dicelang_exec_routine_multiplication(struct dicelang_interpreter *interpreter, struct dicelang_exec_context *context);
+static void dicelang_exec_routine_function_call(struct dicelang_interpreter *interpreter, struct dicelang_exec_context *context);
 
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------
@@ -47,10 +48,11 @@ static void dicelang_exec_routine_multiplication(struct dicelang_interpreter *in
 static const dicelang_exec_routine dicelang_exec_routine_map[DSTX_NUMBER] = {
         [DTOK_value]      = &dicelang_exec_routine_value,
 
-        [DSTX_assignment] = &dicelang_exec_routine_assignment,
-        [DSTX_addition] = &dicelang_exec_routine_addition,
-        [DSTX_dice]       = &dicelang_exec_routine_dice,
-        [DSTX_multiplication]     = &dicelang_exec_routine_multiplication,
+        [DSTX_assignment]     = &dicelang_exec_routine_assignment,
+        [DSTX_addition]       = &dicelang_exec_routine_addition,
+        [DSTX_dice]           = &dicelang_exec_routine_dice,
+        [DSTX_multiplication] = &dicelang_exec_routine_multiplication,
+        [DSTX_function_call]  = &dicelang_exec_routine_function_call,
 };
 
 // -------------------------------------------------------------------------------------------------
@@ -275,4 +277,12 @@ static void dicelang_exec_routine_multiplication(struct dicelang_interpreter *in
 {
     (void) interpreter;
     (void) context;
+}
+
+static void dicelang_exec_routine_function_call(struct dicelang_interpreter *interpreter, struct dicelang_exec_context *context)
+{
+    (void) interpreter;
+
+    printf("calling function");
+    dicelang_parse_node_dump(context->node, stdout);
 }

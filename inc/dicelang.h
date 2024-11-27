@@ -44,6 +44,8 @@ enum dicelang_token_flavour {
     DTOK_close_sq_bracket,      ///< Token to finish either an array access or to finish an array declaration.
 
     DSTX_program,
+    DSTX_statement,
+    DSTX_function_call,
     DSTX_assignment,
     DSTX_variable,
     DSTX_addition,

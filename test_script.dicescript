@@ -1,6 +1,7 @@
 
 # bases
 R : 2 + 1 + 4 + 3 + 4 + 6
+print(R)
 
 #var : 1d3
 #some_dice : 4d6 + 1 - 1d20
