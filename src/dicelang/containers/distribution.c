@@ -66,6 +66,17 @@ void dicelang_distrib_destroy(struct dicelang_distrib *distrib, struct allocator
 /**
  * @brief
  *
+ * @param d
+ * @return
+ */
+bool dicelang_distrib_is_empty(struct dicelang_distrib d)
+{
+    return ((d.values) && (d.values->length > 0));
+}
+
+/**
+ * @brief
+ *
  * @param lhs
  * @param rhs
  * @param alloc

@@ -1,12 +1,11 @@
 
 #include "containers/distribution.h"
+#include "containers/var_hashmap.h"
 
 #include <dicelang.h>
 
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------
-
-struct dicelang_variable { u32 hash; struct dicelang_distrib distr; };
 
 struct dicelang_exec_context {
     struct dicelang_parse_node *node;
@@ -18,7 +17,7 @@ struct dicelang_exec_context {
 struct dicelang_interpreter {
     struct allocator alloc;
 
-    RANGE(struct dicelang_variable) *vars_hashmap;
+    struct dicelang_variable_map variables;
 
     RANGE(struct dicelang_distrib) *values_stack;
     RANGE(struct dicelang_exec_context) *exec_stack;
@@ -129,7 +128,8 @@ static struct dicelang_interpreter dicelang_interpreter_create(size_t start_stac
 {
     struct dicelang_interpreter interp = {
             .alloc = alloc,
-            .vars_hashmap = range_create_dynamic(alloc, sizeof(*interp.vars_hashmap->data), start_hashmap_size),
+
+            .variables = dicelang_variable_map_create(start_hashmap_size, alloc),
 
             .values_stack = range_create_dynamic(alloc, sizeof(*interp.values_stack->data), start_stack_size),
             .exec_stack = range_create_dynamic(alloc, sizeof(*interp.exec_stack->data), start_stack_size),
@@ -151,11 +151,12 @@ static void dicelang_interpreter_destroy(struct dicelang_interpreter *interp, st
         return;
     }
 
+    dicelang_variable_map_destroy(&interp->variables, alloc);
+
     for (size_t i = 0 ; i < interp->values_stack->length ; i++) {
         dicelang_distrib_destroy(interp->values_stack->data + i, alloc);
     }
 
-    range_destroy_dynamic(alloc, &RANGE_TO_ANY(interp->vars_hashmap));
     range_destroy_dynamic(alloc, &RANGE_TO_ANY(interp->values_stack));
     range_destroy_dynamic(alloc, &RANGE_TO_ANY(interp->exec_stack));
 
