@@ -1,5 +1,5 @@
 
-#include "maths/distribution.h"
+#include "containers/distribution.h"
 
 #include <dicelang.h>
 
@@ -221,7 +221,7 @@ static void dicelang_exec_routine_assignment(struct dicelang_interpreter *interp
     (void) context;
 
     printf("assigning distribution (%ld values) to token : ", interpreter->values_stack->data[context->values_stack_index].values->length);
-    dicelang_token_print(context->node->token, stdout);
+    dicelang_token_print(context->node->children->data[0]->token, stdout);
 }
 
 /**

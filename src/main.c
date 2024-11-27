@@ -2,7 +2,7 @@
 #include <stdio.h>
 
 #include <dicelang.h>
-#include "dicelang/maths/distribution.h"
+#include "dicelang/containers/distribution.h"
 
 int main(int argc, const char *argv[])
 {
