@@ -81,7 +81,7 @@ bool dicelang_variable_map_get(struct dicelang_variable_map map, const char *nam
  * @param len_name
  * @param new_val
  */
-bool dicelang_variable_map_set(struct dicelang_variable_map map, const char *name, size_t len_name, struct dicelang_distrib *new_val, struct allocator alloc)
+bool dicelang_variable_map_set(struct dicelang_variable_map *map, const char *name, size_t len_name, struct dicelang_distrib *new_val, struct allocator alloc)
 {
     u32 hash = 0;
     size_t pos = 0;
@@ -92,16 +92,16 @@ bool dicelang_variable_map_set(struct dicelang_variable_map map, const char *nam
 
     hash = hash_jenkins_one_at_a_time((const byte *) name, len_name, 0);
 
-    if (sorted_range_find_in(RANGE_TO_ANY(map.vars), &hash_compare, &hash, &pos)) {
-        dicelang_distrib_destroy(&map.vars->data[pos].val, alloc);
+    if (sorted_range_find_in(RANGE_TO_ANY(map->vars), &hash_compare, &hash, &pos)) {
+        dicelang_distrib_destroy(&map->vars->data[pos].val, alloc);
         goto lbl_dicelang_variable_map_set_assume_ownership;
     }
 
-    range_ensure_capacity(alloc, RANGE_TO_ANY(map.vars), 1);
-    range_insert_value(RANGE_TO_ANY(map.vars), pos, &(struct dicelang_variable) { .hash = hash, .val = { } });
+    range_ensure_capacity(alloc, RANGE_TO_ANY(map->vars), 1);
+    range_insert_value(RANGE_TO_ANY(map->vars), pos, &(struct dicelang_variable) { .hash = hash, .val = { } });
 
 lbl_dicelang_variable_map_set_assume_ownership:
-    map.vars->data[pos].val = *new_val;
+    map->vars->data[pos].val = *new_val;
     *new_val = (struct dicelang_distrib) { };
     return true;
 }

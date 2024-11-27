@@ -216,13 +216,31 @@ static void dicelang_exec_routine_value(struct dicelang_interpreter *interpreter
     range_push(RANGE_TO_ANY(interpreter->values_stack), &new_distrib);
 }
 
+/**
+ * @brief
+ *
+ * @param interpreter
+ * @param context
+ */
 static void dicelang_exec_routine_assignment(struct dicelang_interpreter *interpreter, struct dicelang_exec_context *context)
 {
-    (void) interpreter;
-    (void) context;
+    struct dicelang_token indentifier = { };
+    struct dicelang_distrib val = { };
 
-    printf("assigning distribution (%ld values) to token : ", interpreter->values_stack->data[context->values_stack_index].values->length);
-    dicelang_token_print(context->node->children->data[0]->token, stdout);
+    if ((context->node->children->length == 0) || ((context->values_stack_index + 1) != interpreter->values_stack->length)) {
+        return;
+    }
+
+    indentifier = context->node->children->data[0]->token;
+    val = RANGE_LAST(interpreter->values_stack);
+
+    if (dicelang_variable_map_set(&interpreter->variables, indentifier.value.source, indentifier.value.source_length, &val, interpreter->alloc)) {
+        range_pop(RANGE_TO_ANY(interpreter->values_stack));
+        return;
+    }
+
+    dicelang_distrib_destroy(&RANGE_LAST(interpreter->values_stack), interpreter->alloc);
+    range_pop(RANGE_TO_ANY(interpreter->values_stack));
 }
 
 /**
