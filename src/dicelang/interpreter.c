@@ -1,6 +1,7 @@
 
 #include "containers/distribution.h"
 #include "containers/var_hashmap.h"
+#include "containers/func_hashmap.h"
 
 #include <dicelang.h>
 
@@ -18,6 +19,7 @@ struct dicelang_interpreter {
     struct allocator alloc;
 
     struct dicelang_variable_map variables;
+    struct dicelang_function_map functions;
 
     RANGE(struct dicelang_distrib) *values_stack;
     RANGE(struct dicelang_exec_context) *exec_stack;
@@ -132,6 +134,7 @@ static struct dicelang_interpreter dicelang_interpreter_create(size_t start_stac
             .alloc = alloc,
 
             .variables = dicelang_variable_map_create(start_hashmap_size, alloc),
+            .functions = dicelang_function_map_create(start_hashmap_size, alloc),
 
             .values_stack = range_create_dynamic(alloc, sizeof(*interp.values_stack->data), start_stack_size),
             .exec_stack = range_create_dynamic(alloc, sizeof(*interp.exec_stack->data), start_stack_size),
@@ -154,6 +157,7 @@ static void dicelang_interpreter_destroy(struct dicelang_interpreter *interp, st
     }
 
     dicelang_variable_map_destroy(&interp->variables, alloc);
+    dicelang_function_map_destroy(&interp->functions, alloc);
 
     for (size_t i = 0 ; i < interp->values_stack->length ; i++) {
         dicelang_distrib_destroy(interp->values_stack->data + i, alloc);
