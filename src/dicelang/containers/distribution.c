@@ -157,10 +157,9 @@ struct dicelang_distrib dicelang_distrib_substract(struct dicelang_distrib lhs, 
  * @param alloc
  * @return
  */
-struct dicelang_distrib dicelang_distrib_dice(struct dicelang_distrib lhs, struct dicelang_distrib rhs, struct allocator alloc)
+struct dicelang_distrib dicelang_distrib_dice(struct dicelang_distrib from, struct allocator alloc)
 {
-    (void) lhs;
-    (void) rhs;
+    (void) from;
     (void) alloc;
 
     return  (struct dicelang_distrib) { };
