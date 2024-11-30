@@ -294,24 +294,9 @@ static void addition(RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, st
     struct dicelang_parse_node *expression_node = dicelang_parse_node_create(
             (struct dicelang_token) { .flavour = DSTX_addition, }, parent, alloc);
 
-    dice(tokens, expression_node, error_sink, alloc);
+    multiplication(tokens, expression_node, error_sink, alloc);
     while (accept(tokens, DTOK_op_addition, expression_node, alloc) || accept(tokens, DTOK_op_substraction, expression_node, alloc)) {
-        dice(tokens, expression_node, error_sink, alloc);
-    }
-}
-
-/**
- * @brief
- *
- */
-static void dice(RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, struct dicelang_error *error_sink, struct allocator alloc)
-{
-    struct dicelang_parse_node *dice_node = dicelang_parse_node_create(
-            (struct dicelang_token) { .flavour = DSTX_dice, }, parent, alloc);
-
-    multiplication(tokens, dice_node, error_sink, alloc);
-    while (accept(tokens, DTOK_op_d, dice_node, alloc)) {
-        multiplication(tokens, dice_node, error_sink, alloc);
+        multiplication(tokens, expression_node, error_sink, alloc);
     }
 }
 
@@ -324,9 +309,24 @@ static void multiplication(RANGE_TOKEN *tokens, struct dicelang_parse_node *pare
     struct dicelang_parse_node *factor_node = dicelang_parse_node_create(
             (struct dicelang_token) { .flavour = DSTX_multiplication, }, parent, alloc);
 
-    operand(tokens, factor_node, error_sink, alloc);
+    dice(tokens, factor_node, error_sink, alloc);
     while (accept(tokens, DTOK_op_multiplication, factor_node, alloc) || accept(tokens, DTOK_op_division, factor_node, alloc)) {
-        operand(tokens, factor_node, error_sink, alloc);
+        dice(tokens, factor_node, error_sink, alloc);
+    }
+}
+
+/**
+ * @brief
+ *
+ */
+static void dice(RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, struct dicelang_error *error_sink, struct allocator alloc)
+{
+    struct dicelang_parse_node *dice_node = dicelang_parse_node_create(
+            (struct dicelang_token) { .flavour = DSTX_dice, }, parent, alloc);
+
+    operand(tokens, dice_node, error_sink, alloc);
+    while (accept(tokens, DTOK_op_d, dice_node, alloc)) {
+        operand(tokens, dice_node, error_sink, alloc);
     }
 }
 
