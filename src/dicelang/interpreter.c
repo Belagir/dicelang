@@ -287,16 +287,42 @@ static void dicelang_exec_routine_addition(struct dicelang_interpreter *interpre
     }
 }
 
+/**
+ * @brief
+ *
+ */
 static void dicelang_exec_routine_dice(struct dicelang_interpreter *interpreter, struct dicelang_exec_context *context)
 {
-    (void) interpreter;
-    (void) context;
+    struct dicelang_distrib tmp_distrib = { };
+
+    if (context->values_stack_index + 1 == interpreter->values_stack->length) {
+        tmp_distrib = dicelang_distrib_dice(RANGE_LAST(interpreter->values_stack), interpreter->alloc);
+
+        dicelang_distrib_destroy(&RANGE_LAST(interpreter->values_stack), interpreter->alloc);
+        range_pop(RANGE_TO_ANY(interpreter->values_stack));
+
+        range_push(RANGE_TO_ANY(interpreter->values_stack), &tmp_distrib);
+    }
 }
 
+/**
+ * @brief
+ *
+ */
 static void dicelang_exec_routine_multiplication(struct dicelang_interpreter *interpreter, struct dicelang_exec_context *context)
 {
-    (void) interpreter;
-    (void) context;
+    struct dicelang_distrib tmp_distrib = { };
+
+    while (context->values_stack_index + 1 < interpreter->values_stack->length) {
+        tmp_distrib = dicelang_distrib_multiply(RANGE_LAST(interpreter->values_stack), RANGE_LAST(interpreter->values_stack, -1), interpreter->alloc);
+
+        dicelang_distrib_destroy(&RANGE_LAST(interpreter->values_stack), interpreter->alloc);
+        range_pop(RANGE_TO_ANY(interpreter->values_stack));
+        dicelang_distrib_destroy(&RANGE_LAST(interpreter->values_stack), interpreter->alloc);
+        range_pop(RANGE_TO_ANY(interpreter->values_stack));
+
+        range_push(RANGE_TO_ANY(interpreter->values_stack), &tmp_distrib);
+    }
 }
 
 /**
@@ -354,6 +380,7 @@ static void dicelang_builtin_print(struct dicelang_distrib *input, struct dicela
     (void) output;
     (void) alloc;
 
+    printf("%ld ---\n", input->values->length);
     for (size_t i = 0 ; i < input->values->length ; i++) {
         printf("%f\t%d\n", input->values->data[i].val, input->values->data[i].count);
     }

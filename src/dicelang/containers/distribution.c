@@ -157,12 +157,72 @@ struct dicelang_distrib dicelang_distrib_substract(struct dicelang_distrib lhs, 
  * @param alloc
  * @return
  */
+struct dicelang_distrib dicelang_distrib_multiply(struct dicelang_distrib lhs, struct dicelang_distrib rhs, struct allocator alloc)
+{
+    struct dicelang_distrib mult = { };
+
+    if (!lhs.values || !rhs.values) {
+        return (struct dicelang_distrib) { };
+    }
+
+    mult = dicelang_distrib_create_empty(alloc);
+
+    return mult;
+}
+
+/**
+ * @brief
+ *
+ * @param lhs
+ * @param rhs
+ * @param alloc
+ * @return
+ */
+struct dicelang_distrib dicelang_distrib_union(struct dicelang_distrib lhs, struct dicelang_distrib rhs, struct allocator alloc)
+{
+    struct dicelang_distrib new_distrib = { };
+
+    if (!lhs.values || !rhs.values) {
+        return (struct dicelang_distrib) { };
+    }
+
+    new_distrib = dicelang_distrib_create_empty(alloc);
+
+    for (size_t i = 0 ; i < lhs.values->length ; i++) {
+        dicelang_distrib_push_value(&new_distrib, lhs.values->data[i].val, lhs.values->data[i].count, alloc);
+    }
+    for (size_t i = 0 ; i < rhs.values->length ; i++) {
+        dicelang_distrib_push_value(&new_distrib, rhs.values->data[i].val, rhs.values->data[i].count, alloc);
+    }
+
+    return new_distrib;
+}
+
+/**
+ * @brief
+ *
+ * @param lhs
+ * @param rhs
+ * @param alloc
+ * @return
+ */
 struct dicelang_distrib dicelang_distrib_dice(struct dicelang_distrib from, struct allocator alloc)
 {
-    (void) from;
-    (void) alloc;
+    struct dicelang_distrib new_distrib = { };
 
-    return  (struct dicelang_distrib) { };
+    if (!from.values) {
+        return (struct dicelang_distrib) { };
+    }
+
+    new_distrib = dicelang_distrib_create_empty(alloc);
+
+    for (size_t i = 0 ; i < from.values->length ; i++) {
+        for (f32 k = 0 ; k < from.values->data[i].val ; k++) {
+            dicelang_distrib_push_value(&new_distrib, k + 1.f, from.values->data[i].count, alloc);
+        }
+    }
+
+    return new_distrib;
 }
 
 // -------------------------------------------------------------------------------------------------
