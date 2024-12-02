@@ -28,13 +28,12 @@ enum dicelang_token_flavour {
     DTOK_file_end,              ///< Script ender token.
     DTOK_identifier,            ///< User-written symbol, such as a variable or a built-in function.
     DTOK_value,                 ///< Integer constant.
-    DTOK_value_real,            ///< Real constant.
     DTOK_separator,             ///< Argument or array elements separator.
-    DTOK_op_addition,              ///< Addition binary operand.
-    DTOK_op_substraction,          ///< Substraction binary operand.
-    DTOK_op_multiplication,        ///< Substraction binary operand.
-    DTOK_op_division,              ///< Substraction binary operand.
-    DTOK_op_d,                     ///< Dice distribution binary operand.
+    DTOK_op_addition,           ///< Addition binary operand.
+    DTOK_op_substraction,       ///< Substraction binary operand.
+    DTOK_op_multiplication,     ///< Substraction binary operand.
+    DTOK_op_division,           ///< Substraction binary operand.
+    DTOK_op_d,                  ///< Dice distribution binary operand.
     DTOK_designator,            ///< Assignment token to link an expression to a variable.
     DTOK_open_parenthesis,      ///< Token to start either a function call's argument list or to start isolating part of an expression.
     DTOK_close_parenthesis,     ///< Token to finish either a function call's argument list or to finish isolating part of an expression.

@@ -272,10 +272,8 @@ struct dicelang_distrib dicelang_distrib_dice(struct dicelang_distrib from, stru
  */
 static f32 dicelang_token_value(const char *bytes, size_t length)
 {
-    f32 read_integral = 0.f;
-    f32 read_fractional = 0.f;
+    f32 number_read = 0.f;
     size_t read_bytes = 0;
-    f32 power = 0.f;
 
     if (!bytes || (length == 0)) {
         return 0.f;
@@ -288,22 +286,13 @@ static f32 dicelang_token_value(const char *bytes, size_t length)
 
     // read integral part
     while ((read_bytes < length) && (bytes[read_bytes] != '.')) {
-        read_integral *= 10.f;
-        read_integral += (f32) (bytes[read_bytes] - '0');
+        number_read *= 10.f;
+        number_read += (f32) (bytes[read_bytes] - '0');
         read_bytes += 1;
     }
 
-    read_bytes += (bytes[read_bytes] == '.');
 
-    // read fractional part
-    power = 0.1f;
-    while (read_bytes < length) {
-        read_fractional += (f32) (bytes[read_bytes] - '0') * power;
-        power /= 10.f;
-        read_bytes += 1;
-    }
-
-    return read_integral + read_fractional;
+    return number_read;
 }
 
 /**

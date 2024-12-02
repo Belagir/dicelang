@@ -4,7 +4,9 @@
 #print(R + 4)
 #print(R)
 
-R : d6+d6+d6
+R : d6 + 1
+print(R)
+R : 2d6
 print(R)
 R : 3d6
 print(R)
@@ -32,8 +34,6 @@ print(R)
 # accessing stuff
 #R[0]
 #R[2]
-#M : mean(R)
-#V : variance(R) + 1.5
 
 # inout functions
 #write(R)

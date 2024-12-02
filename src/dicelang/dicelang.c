@@ -20,7 +20,6 @@ const char *DTOK_DSTX_names[DSTX_NUMBER] = {
         [DTOK_file_end]           = "file_end",
         [DTOK_identifier]         = "identifier",
         [DTOK_value]              = "value",
-        [DTOK_value_real]         = "value_real",
         [DTOK_separator]          = "separator",
         [DTOK_op_addition]        = "addition",
         [DTOK_op_substraction]    = "substraction",

@@ -274,6 +274,10 @@ static void assignment(RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, 
     addition(tokens, assignment_node, error_sink, alloc);
 }
 
+/**
+ * @brief
+ *
+ */
 static void function_call(RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, struct dicelang_error *error_sink, struct allocator alloc)
 {
     struct dicelang_parse_node *function_call_node = dicelang_parse_node_create(
