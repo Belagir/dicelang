@@ -13,6 +13,7 @@ static f32 dicelang_token_value(const char *bytes, size_t length);
 
 static struct dicelang_distrib dicelang_distrib_create_empty(struct allocator alloc);
 static void dicelang_distrib_push_value(struct dicelang_distrib *target, f32 value, u32 count, struct allocator alloc);
+static void dicelang_distrib_push_distrib(struct dicelang_distrib *out_into, struct dicelang_distrib from, struct allocator alloc);
 
 static i32 dicelang_entry_compare(const void *lhs, const void *rhs);
 
@@ -22,8 +23,11 @@ static i32 dicelang_entry_compare(const void *lhs, const void *rhs);
 typedef struct dicelang_entry (*dicelang_distrib_modif_func)(struct dicelang_entry lhs, struct dicelang_entry rhs);
 
 static void dicelang_distrib_combine(struct dicelang_distrib *out_into, dicelang_distrib_modif_func f, struct dicelang_distrib lhs, struct dicelang_distrib rhs, struct allocator alloc);
-static void dicelang_distrib_map(struct dicelang_distrib *out_into, dicelang_distrib_modif_func f, struct dicelang_distrib from, struct dicelang_entry seed, struct allocator alloc);
 static void dicelang_distrib_transform(struct dicelang_distrib *target, dicelang_distrib_modif_func f, struct dicelang_entry seed);
+
+static struct dicelang_entry dicelang_distrib_add_entries(struct dicelang_entry lhs, struct dicelang_entry rhs);
+static struct dicelang_entry dicelang_distrib_sub_entries(struct dicelang_entry lhs, struct dicelang_entry rhs);
+static struct dicelang_entry dicelang_distrib_mult_entries(struct dicelang_entry lhs, struct dicelang_entry rhs);
 
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------
@@ -116,15 +120,13 @@ struct dicelang_distrib dicelang_distrib_add(struct dicelang_distrib lhs, struct
 
     added = dicelang_distrib_create_empty(alloc);
 
-    for (size_t i_lhs = 0 ; i_lhs < lhs.values->length ; i_lhs++) {
-        for (size_t i_rhs = 0 ; i_rhs < rhs.values->length ; i_rhs++) {
-            dicelang_distrib_push_value(&added,
-                    lhs.values->data[i_lhs].val   + rhs.values->data[i_rhs].val,
-                    lhs.values->data[i_lhs].count * rhs.values->data[i_rhs].count,
-                    alloc);
-        }
+    if ((lhs.values->length == 0) || (rhs.values->length == 0)) {
+        dicelang_distrib_push_distrib(&added, lhs, alloc);
+        dicelang_distrib_push_distrib(&added, rhs, alloc);
+        return added;
     }
 
+    dicelang_distrib_combine(&added, &dicelang_distrib_add_entries, lhs, rhs, alloc);
     return added;
 }
 
@@ -144,16 +146,19 @@ struct dicelang_distrib dicelang_distrib_substract(struct dicelang_distrib lhs, 
         return (struct dicelang_distrib) { };
     }
 
-    diff = dicelang_distrib_create_empty(alloc);
-
-    for (size_t i_lhs = 0 ; i_lhs < lhs.values->length ; i_lhs++) {
-        for (size_t i_rhs = 0 ; i_rhs < rhs.values->length ; i_rhs++) {
-            dicelang_distrib_push_value(&diff,
-                    lhs.values->data[i_lhs].val   - rhs.values->data[i_rhs].val,
-                    lhs.values->data[i_lhs].count * rhs.values->data[i_rhs].count,
-                    alloc);
-        }
+    if (rhs.values->length == 0) {
+        dicelang_distrib_push_distrib(&diff, lhs, alloc);
+        return diff;
     }
+
+    if (rhs.values->length == 0) {
+        dicelang_distrib_push_distrib(&diff, lhs, alloc);
+        dicelang_distrib_transform(&diff, &dicelang_distrib_mult_entries, (struct dicelang_entry) { .val = -1, .count = 1 });
+        return diff;
+    }
+
+    diff = dicelang_distrib_create_empty(alloc);
+    dicelang_distrib_combine(&diff, &dicelang_distrib_sub_entries, lhs, rhs, alloc);
 
     return diff;
 }
@@ -169,18 +174,19 @@ struct dicelang_distrib dicelang_distrib_substract(struct dicelang_distrib lhs, 
 struct dicelang_distrib dicelang_distrib_multiply(struct dicelang_distrib lhs, struct dicelang_distrib rhs, struct allocator alloc)
 {
     struct dicelang_distrib mult = { };
+    struct dicelang_distrib addition = { };
+    struct dicelang_distrib buffer = { };
 
     if (!lhs.values || !rhs.values) {
         return (struct dicelang_distrib) { };
     }
 
     mult = dicelang_distrib_create_empty(alloc);
+    addition = dicelang_distrib_create_empty(alloc);
+    buffer = dicelang_distrib_create_empty(alloc);
 
-    for (size_t i = 0 ; i < lhs.values->length ; i++) {
-        for (size_t j = 0 ; j < (size_t) lhs.values->data[i].val * lhs.values->data[i].count ; j++) {
-
-        }
-    }
+    dicelang_distrib_destroy(&addition, alloc);
+    dicelang_distrib_destroy(&buffer, alloc);
 
     return mult;
 }
@@ -203,12 +209,8 @@ struct dicelang_distrib dicelang_distrib_union(struct dicelang_distrib lhs, stru
 
     new_distrib = dicelang_distrib_create_empty(alloc);
 
-    for (size_t i = 0 ; i < lhs.values->length ; i++) {
-        dicelang_distrib_push_value(&new_distrib, lhs.values->data[i].val, lhs.values->data[i].count, alloc);
-    }
-    for (size_t i = 0 ; i < rhs.values->length ; i++) {
-        dicelang_distrib_push_value(&new_distrib, rhs.values->data[i].val, rhs.values->data[i].count, alloc);
-    }
+    dicelang_distrib_push_distrib(&new_distrib, lhs, alloc);
+    dicelang_distrib_push_distrib(&new_distrib, rhs, alloc);
 
     return new_distrib;
 }
@@ -334,6 +336,24 @@ static void dicelang_distrib_push_value(struct dicelang_distrib *target, f32 val
 /**
  * @brief
  *
+ * @param out_into
+ * @param from
+ * @param alloc
+ */
+static void dicelang_distrib_push_distrib(struct dicelang_distrib *out_into, struct dicelang_distrib from, struct allocator alloc)
+{
+    if (!out_into || !from.values) {
+        return;
+    }
+
+    for (size_t i = 0 ; i < from.values->length ; i++) {
+        dicelang_distrib_push_value(out_into, from.values->data[i].val, from.values->data[i].count, alloc);
+    }
+}
+
+/**
+ * @brief
+ *
  * @param lhs
  * @param rhs
  * @return i32
@@ -377,23 +397,6 @@ static void dicelang_distrib_combine(struct dicelang_distrib *out_into, dicelang
 /**
  * @brief
  *
- * @param out_into
- * @param f
- * @param from
- */
-static void dicelang_distrib_map(struct dicelang_distrib *out_into, dicelang_distrib_modif_func f, struct dicelang_distrib from, struct dicelang_entry seed, struct allocator alloc)
-{
-    struct dicelang_entry tmp_entry = { };
-
-    for (size_t i = 0 ; i < from.values->length ; i++) {
-        tmp_entry = f(from.values->data[i], seed);
-        dicelang_distrib_push_value(out_into, tmp_entry.val, tmp_entry.count, alloc);
-    }
-}
-
-/**
- * @brief
- *
  * @param target
  * @param f
  * @param seed
@@ -403,6 +406,33 @@ static void dicelang_distrib_transform(struct dicelang_distrib *target, dicelang
     for (size_t i = 0 ; i < target->values->length ; i++) {
         target->values->data[i] = f(target->values->data[i], seed);
     }
+}
+
+/**
+ * @brief
+ *
+ */
+static struct dicelang_entry dicelang_distrib_add_entries(struct dicelang_entry lhs, struct dicelang_entry rhs)
+{
+    return (struct dicelang_entry) { .val = lhs.val + rhs.val, .count = lhs.count * rhs.count };
+}
+
+/**
+ * @brief
+ *
+ */
+static struct dicelang_entry dicelang_distrib_sub_entries(struct dicelang_entry lhs, struct dicelang_entry rhs)
+{
+    return (struct dicelang_entry) { .val = lhs.val - rhs.val, .count = lhs.count * rhs.count };
+}
+
+/**
+ * @brief
+ *
+ */
+static struct dicelang_entry dicelang_distrib_mult_entries(struct dicelang_entry lhs, struct dicelang_entry rhs)
+{
+    return (struct dicelang_entry) { .val = lhs.val * rhs.val, .count = lhs.count * rhs.count };
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -510,13 +540,13 @@ tst_CREATE_TEST_CASE(distr_add_empty_left, distr_add,
         .lhs = RANGE_CREATE_STATIC(struct dicelang_entry, 6, { }),
         .rhs = RANGE_CREATE_STATIC(struct dicelang_entry, 6, { { .val = 1, .count = 1 }, { .val = 2, .count = 1 } }),
 
-        .expected = RANGE_CREATE_STATIC(struct dicelang_entry, 36, { }),
+        .expected = RANGE_CREATE_STATIC(struct dicelang_entry, 36, { { .val = 1, .count = 1 }, { .val = 2, .count = 1 } }),
 )
 tst_CREATE_TEST_CASE(distr_add_empty_right, distr_add,
         .lhs = RANGE_CREATE_STATIC(struct dicelang_entry, 6, { { .val = 1, .count = 1 }, { .val = 2, .count = 1 } }),
         .rhs = RANGE_CREATE_STATIC(struct dicelang_entry, 6, { }),
 
-        .expected = RANGE_CREATE_STATIC(struct dicelang_entry, 36, { }),
+        .expected = RANGE_CREATE_STATIC(struct dicelang_entry, 36, { { .val = 1, .count = 1 }, { .val = 2, .count = 1 } }),
 )
 tst_CREATE_TEST_CASE(distr_add_empty_empty, distr_add,
         .lhs = RANGE_CREATE_STATIC(struct dicelang_entry, 6, { }),

@@ -4,14 +4,11 @@
 #print(R + 4)
 #print(R)
 
-R : d20
-print(R)
-R : d6
-print(R)
-R : d6 + d6
-print(R)
 R : 2d6
 print(R)
+R : d6+d6+d6
+print(R)
+
 #var : 1d3
 #some_dice : 4d6 + 1 - 1d20
 #dice : [1, 2, 2, 3, 4, 10]
