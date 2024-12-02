@@ -4,9 +4,9 @@
 #print(R + 4)
 #print(R)
 
-R : 2d6
-print(R)
 R : d6+d6+d6
+print(R)
+R : 3d6
 print(R)
 
 #var : 1d3

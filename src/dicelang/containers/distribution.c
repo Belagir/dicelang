@@ -174,7 +174,7 @@ struct dicelang_distrib dicelang_distrib_substract(struct dicelang_distrib lhs, 
 struct dicelang_distrib dicelang_distrib_multiply(struct dicelang_distrib lhs, struct dicelang_distrib rhs, struct allocator alloc)
 {
     struct dicelang_distrib mult = { };
-    struct dicelang_distrib addition = { };
+    struct dicelang_distrib sum = { };
     struct dicelang_distrib buffer = { };
 
     if (!lhs.values || !rhs.values) {
@@ -182,10 +182,28 @@ struct dicelang_distrib dicelang_distrib_multiply(struct dicelang_distrib lhs, s
     }
 
     mult = dicelang_distrib_create_empty(alloc);
-    addition = dicelang_distrib_create_empty(alloc);
+    sum = dicelang_distrib_create_empty(alloc);
     buffer = dicelang_distrib_create_empty(alloc);
 
-    dicelang_distrib_destroy(&addition, alloc);
+    for (size_t i_rhs = 0 ; i_rhs < rhs.values->length ; i_rhs++) {
+        // empty out the sum temporary distrib
+        range_clear(RANGE_TO_ANY(sum.values));
+        dicelang_distrib_push_value(&sum, 0, 1, alloc);
+
+        for (f32 i = 0 ; i < rhs.values->data[i_rhs].val ; i++) {
+            // empty out the buffer and take the addition result (reallocation of result may make a seg fault if the sum is passed directly)
+            range_clear(RANGE_TO_ANY(buffer.values));
+            dicelang_distrib_combine(&buffer, &dicelang_distrib_add_entries, sum, lhs, alloc);
+
+            // transfer the buffer contents into the sum
+            range_clear(RANGE_TO_ANY(sum.values));
+            dicelang_distrib_push_distrib(&sum, buffer, alloc);
+        }
+
+        dicelang_distrib_push_distrib(&mult, sum, alloc);
+    }
+
+    dicelang_distrib_destroy(&sum, alloc);
     dicelang_distrib_destroy(&buffer, alloc);
 
     return mult;
@@ -560,6 +578,12 @@ tst_CREATE_TEST_CASE(distr_add_nominal_counted, distr_add,
 
         .expected = RANGE_CREATE_STATIC(struct dicelang_entry, 36, { { .val = 3, .count = 1 }, { .val = 4, .count = 3 }, { .val = 5, .count = 3 }, { .val = 6, .count = 1 }, }),
 )
+tst_CREATE_TEST_CASE(distr_add_with_zero, distr_add,
+        .lhs = RANGE_CREATE_STATIC(struct dicelang_entry, 6, { { .val = 0, .count = 1 }, }),
+        .rhs = RANGE_CREATE_STATIC(struct dicelang_entry, 6, { { .val = 1, .count = 1 }, { .val = 2, .count = 1 } }),
+
+        .expected = RANGE_CREATE_STATIC(struct dicelang_entry, 36, { { .val = 1, .count = 1 }, { .val = 2, .count = 1 }, }),
+)
 
 tst_CREATE_TEST_SCENARIO(distr_sub,
         {
@@ -617,6 +641,7 @@ void dicelang_distrib_test(void)
     tst_run_test_case(distr_add_empty_right);
     tst_run_test_case(distr_add_empty_empty);
     tst_run_test_case(distr_add_nominal_counted);
+    tst_run_test_case(distr_add_with_zero);
 
     tst_run_test_case(distr_sub_nominal);
 }
