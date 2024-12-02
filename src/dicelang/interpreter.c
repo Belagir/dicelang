@@ -382,6 +382,6 @@ static void dicelang_builtin_print(struct dicelang_distrib *input, struct dicela
 
     printf("%ld ---\n", input->values->length);
     for (size_t i = 0 ; i < input->values->length ; i++) {
-        printf("%f\t%d\n", input->values->data[i].val, input->values->data[i].count);
+        printf("%d\t%d\n", input->values->data[i].val, input->values->data[i].count);
     }
 }
