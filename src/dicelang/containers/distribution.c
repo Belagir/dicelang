@@ -19,6 +19,15 @@ static i32 dicelang_entry_compare(const void *lhs, const void *rhs);
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------
 
+typedef struct dicelang_entry (*dicelang_distrib_modif_func)(struct dicelang_entry lhs, struct dicelang_entry rhs);
+
+static void dicelang_distrib_combine(struct dicelang_distrib *out_into, dicelang_distrib_modif_func f, struct dicelang_distrib lhs, struct dicelang_distrib rhs, struct allocator alloc);
+static void dicelang_distrib_map(struct dicelang_distrib *out_into, dicelang_distrib_modif_func f, struct dicelang_distrib from, struct dicelang_entry seed, struct allocator alloc);
+static void dicelang_distrib_transform(struct dicelang_distrib *target, dicelang_distrib_modif_func f, struct dicelang_entry seed);
+
+// -------------------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------
+
 
 /**
  * @brief
@@ -166,6 +175,12 @@ struct dicelang_distrib dicelang_distrib_multiply(struct dicelang_distrib lhs, s
     }
 
     mult = dicelang_distrib_create_empty(alloc);
+
+    for (size_t i = 0 ; i < lhs.values->length ; i++) {
+        for (size_t j = 0 ; j < (size_t) lhs.values->data[i].val * lhs.values->data[i].count ; j++) {
+
+        }
+    }
 
     return mult;
 }
@@ -333,6 +348,61 @@ static i32 dicelang_entry_compare(const void *lhs, const void *rhs)
     }
 
     return (lhs_val > rhs_val) - (lhs_val < rhs_val);
+}
+
+// -------------------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------
+
+/**
+ * @brief
+ *
+ * @param out_into
+ * @param f
+ * @param lhs
+ * @param rhs
+ * @param alloc
+ */
+static void dicelang_distrib_combine(struct dicelang_distrib *out_into, dicelang_distrib_modif_func f, struct dicelang_distrib lhs, struct dicelang_distrib rhs, struct allocator alloc)
+{
+    struct dicelang_entry tmp_entry = { };
+
+    for (size_t i_lhs = 0 ; i_lhs < lhs.values->length ; i_lhs++) {
+        for (size_t i_rhs = 0 ; i_rhs < rhs.values->length ; i_rhs++) {
+            tmp_entry = f(lhs.values->data[i_lhs], rhs.values->data[i_rhs]);
+            dicelang_distrib_push_value(out_into, tmp_entry.val, tmp_entry.count, alloc);
+        }
+    }
+}
+
+/**
+ * @brief
+ *
+ * @param out_into
+ * @param f
+ * @param from
+ */
+static void dicelang_distrib_map(struct dicelang_distrib *out_into, dicelang_distrib_modif_func f, struct dicelang_distrib from, struct dicelang_entry seed, struct allocator alloc)
+{
+    struct dicelang_entry tmp_entry = { };
+
+    for (size_t i = 0 ; i < from.values->length ; i++) {
+        tmp_entry = f(from.values->data[i], seed);
+        dicelang_distrib_push_value(out_into, tmp_entry.val, tmp_entry.count, alloc);
+    }
+}
+
+/**
+ * @brief
+ *
+ * @param target
+ * @param f
+ * @param seed
+ */
+static void dicelang_distrib_transform(struct dicelang_distrib *target, dicelang_distrib_modif_func f, struct dicelang_entry seed)
+{
+    for (size_t i = 0 ; i < target->values->length ; i++) {
+        target->values->data[i] = f(target->values->data[i], seed);
+    }
 }
 
 // -------------------------------------------------------------------------------------------------
