@@ -32,7 +32,6 @@ enum dicelang_token_flavour {
     DTOK_op_addition,           ///< Addition binary operand.
     DTOK_op_substraction,       ///< Substraction binary operand.
     DTOK_op_multiplication,     ///< Substraction binary operand.
-    DTOK_op_division,           ///< Substraction binary operand.
     DTOK_op_d,                  ///< Dice distribution binary operand.
     DTOK_designator,            ///< Assignment token to link an expression to a variable.
     DTOK_open_parenthesis,      ///< Token to start either a function call's argument list or to start isolating part of an expression.

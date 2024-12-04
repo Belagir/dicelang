@@ -46,6 +46,7 @@ static struct dicelang_interpreter dicelang_interpreter_create(size_t start_stac
 static void dicelang_interpreter_destroy(struct dicelang_interpreter *interp, struct allocator alloc);
 static struct dicelang_exec_context *dicelang_interpreter_push_context(struct dicelang_interpreter *interp, struct dicelang_parse_node *node, struct allocator alloc);
 static struct dicelang_exec_context *dicelang_interpreter_pop_context(struct dicelang_interpreter interp);
+static bool dicelang_exec_context_has_child(struct dicelang_exec_context *context, enum dicelang_token_flavour what);
 
 // -------------------------------------------------------------------------------------------------
 
@@ -217,6 +218,30 @@ static struct dicelang_exec_context *dicelang_interpreter_pop_context(struct dic
     return interp.exec_stack->data + interp.exec_stack->length - 1;
 }
 
+/**
+ * @brief
+ *
+ * @param context
+ * @param
+ * @return
+ */
+static bool dicelang_exec_context_has_child(struct dicelang_exec_context *context, enum dicelang_token_flavour what)
+{
+    bool found = false;
+    size_t child_index = 0;
+
+    if (!context || !context->node || !context->node->children) {
+        return false;
+    }
+
+    while (!found && (child_index < context->node->children->length)) {
+        found = context->node->children->data[child_index]->token.flavour == what;
+        child_index += 1;
+    }
+
+    return found;
+}
+
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------
 
@@ -276,7 +301,11 @@ static void dicelang_exec_routine_addition(struct dicelang_interpreter *interpre
     struct dicelang_distrib tmp_distrib = { };
 
     while (context->values_stack_index + 1 < interpreter->values_stack->length) {
-        tmp_distrib = dicelang_distrib_add(RANGE_LAST(interpreter->values_stack), RANGE_LAST(interpreter->values_stack, -1), interpreter->alloc);
+        if (dicelang_exec_context_has_child(context, DTOK_op_addition)) {
+            tmp_distrib = dicelang_distrib_add(RANGE_LAST(interpreter->values_stack, -1), RANGE_LAST(interpreter->values_stack), interpreter->alloc);
+        } else {
+            tmp_distrib = dicelang_distrib_substract(RANGE_LAST(interpreter->values_stack, -1), RANGE_LAST(interpreter->values_stack), interpreter->alloc);
+        }
 
         dicelang_distrib_destroy(&RANGE_LAST(interpreter->values_stack), interpreter->alloc);
         range_pop(RANGE_TO_ANY(interpreter->values_stack));
@@ -314,7 +343,7 @@ static void dicelang_exec_routine_multiplication(struct dicelang_interpreter *in
     struct dicelang_distrib tmp_distrib = { };
 
     while (context->values_stack_index + 1 < interpreter->values_stack->length) {
-        tmp_distrib = dicelang_distrib_multiply(RANGE_LAST(interpreter->values_stack), RANGE_LAST(interpreter->values_stack, -1), interpreter->alloc);
+        tmp_distrib = dicelang_distrib_multiply(RANGE_LAST(interpreter->values_stack, -1), RANGE_LAST(interpreter->values_stack), interpreter->alloc);
 
         dicelang_distrib_destroy(&RANGE_LAST(interpreter->values_stack), interpreter->alloc);
         range_pop(RANGE_TO_ANY(interpreter->values_stack));

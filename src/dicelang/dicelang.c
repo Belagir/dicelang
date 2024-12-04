@@ -24,7 +24,6 @@ const char *DTOK_DSTX_names[DSTX_NUMBER] = {
         [DTOK_op_addition]        = "addition",
         [DTOK_op_substraction]    = "substraction",
         [DTOK_op_multiplication]  = "multiplication",
-        [DTOK_op_division]        = "division",
         [DTOK_op_d]               = "_d",
         [DTOK_designator]         = "designator",
         [DTOK_open_parenthesis]   = "open parenthesis",

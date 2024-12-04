@@ -314,8 +314,7 @@ static void multiplication(RANGE_TOKEN *tokens, struct dicelang_parse_node *pare
             (struct dicelang_token) { .flavour = DSTX_multiplication, }, parent, alloc);
 
     operand(tokens, factor_node, error_sink, alloc);
-    while (accept(tokens, DTOK_op_multiplication, factor_node, alloc) || accept(tokens, DTOK_op_division, factor_node, alloc)
-            || lookup(tokens, 0, DTOK_op_d)) {
+    while (accept(tokens, DTOK_op_multiplication, factor_node, alloc) || lookup(tokens, 0, DTOK_op_d)) {
         operand(tokens, factor_node, error_sink, alloc);
     }
 }
@@ -374,6 +373,10 @@ static void expr_set(RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, st
     }
 }
 
+/**
+ * @brief
+ *
+ */
 static void var_access(RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, struct dicelang_error *error_sink, struct allocator alloc)
 {
     struct dicelang_parse_node *var_node = dicelang_parse_node_create(

@@ -185,15 +185,15 @@ struct dicelang_distrib dicelang_distrib_multiply(struct dicelang_distrib lhs, s
     sum = dicelang_distrib_create_empty(alloc);
     buffer = dicelang_distrib_create_empty(alloc);
 
-    for (size_t i_rhs = 0 ; i_rhs < rhs.values->length ; i_rhs++) {
+    for (size_t i_lhs = 0 ; i_lhs < lhs.values->length ; i_lhs++) {
         // empty out the sum temporary distrib
         range_clear(RANGE_TO_ANY(sum.values));
         dicelang_distrib_push_value(&sum, (struct dicelang_entry) { 0, 1 }, alloc);
 
-        for (f32 i = 0 ; i < rhs.values->data[i_rhs].val ; i++) {
+        for (f32 i = 0 ; i < lhs.values->data[i_lhs].val ; i++) {
             // empty out the buffer and take the addition result (reallocation of result may make a seg fault if the sum is passed directly)
             range_clear(RANGE_TO_ANY(buffer.values));
-            dicelang_distrib_combine(&buffer, &dicelang_distrib_add_entries, sum, lhs, alloc);
+            dicelang_distrib_combine(&buffer, &dicelang_distrib_add_entries, sum, rhs, alloc);
 
             // transfer the buffer contents into the sum
             range_clear(RANGE_TO_ANY(sum.values));
@@ -252,7 +252,7 @@ struct dicelang_distrib dicelang_distrib_dice(struct dicelang_distrib from, stru
     new_distrib = dicelang_distrib_create_empty(alloc);
 
     for (size_t i = 0 ; i < from.values->length ; i++) {
-        for (u32 k = 0 ; k < from.values->data[i].val ; k++) {
+        for (i32 k = 0 ; k < from.values->data[i].val ; k++) {
             dicelang_distrib_push_value(&new_distrib, (struct dicelang_entry) { .val = k + 1, .count = from.values->data[i].count }, alloc);
         }
     }
@@ -367,8 +367,8 @@ static void dicelang_distrib_push_distrib(struct dicelang_distrib *out_into, str
  */
 static i32 dicelang_entry_compare(const void *lhs, const void *rhs)
 {
-    u32 lhs_val = *(u32 *) lhs;
-    u32 rhs_val = *(u32 *) rhs;
+    i32 lhs_val = *(i32 *) lhs;
+    i32 rhs_val = *(i32 *) rhs;
 
     return (lhs_val > rhs_val) - (lhs_val < rhs_val);
 }

@@ -238,7 +238,6 @@ static const struct dicelang_token_transition dicelang_token_definitions[][DTOK_
         ['+']   = { [DTOK_empty] = { DTOK_op_addition,       true } },
         ['-']   = { [DTOK_empty] = { DTOK_op_substraction,   true } },
         ['*']   = { [DTOK_empty] = { DTOK_op_multiplication, true } },
-        ['/']   = { [DTOK_empty] = { DTOK_op_division,       true } },
 
         ['(']   = { [DTOK_empty] = { DTOK_open_parenthesis,  true } },
         [')']   = { [DTOK_empty] = { DTOK_close_parenthesis, true } },
