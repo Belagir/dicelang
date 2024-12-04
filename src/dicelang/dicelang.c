@@ -1,10 +1,15 @@
+/**
+ * @file dicelang.c
+ * @author gabriel ()
+ * @brief This is the main dicelang implementation file and contains functions that ties all of the system's aspect together.
+ * @version 0.1
+ * @date 2024-12-04
+ *
+ * @copyright Copyright (c) 2024
+ *
+ */
 
 #include <dicelang.h>
-
-// -------------------------------------------------------------------------------------------------
-// -------------------------------------------------------------------------------------------------
-
-void dicelang_error_print(struct dicelang_error err, FILE *to_file);
 
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------
@@ -49,10 +54,13 @@ const char *DTOK_DSTX_names[DSTX_NUMBER] = {
 // -------------------------------------------------------------------------------------------------
 
 /**
- * @brief
+ * @brief Creates a tangible program (hopefuly) that can be interpreted directly with dicelang_interpret().
+ * The returned structure contains the raw text from the file and an intermediate representations of the program as a parse tree.
+ * The parse tree is the one being interpreted, and references the raw text.
+ * A dicelang_program structure, even malformed because some error occured, should be destroyed with dicelang_program_destroy().
  *
- * @param from_file
- * @param alloc
+ * @param[in] from_file File from which is read the program. The file is read entirely before it is parsed and interpreted.
+ * @param[in] alloc Allocator used to get memory for the program.
  * @return struct dicelang_program
  */
 struct dicelang_program dicelang_program_create_from_file(FILE *from_file, allocator alloc)
@@ -70,7 +78,7 @@ struct dicelang_program dicelang_program_create_from_file(FILE *from_file, alloc
     while ((read_char = fgetc(from_file)) != EOF) {
         new_program.text = range_ensure_capacity(alloc, RANGE_TO_ANY(new_program.text), 1);
         range_push(RANGE_TO_ANY(new_program.text), &read_char);
-    } ;
+    }
 
     // adding terminator
     new_program.text = range_ensure_capacity(alloc, RANGE_TO_ANY(new_program.text), 1);
@@ -86,10 +94,10 @@ struct dicelang_program dicelang_program_create_from_file(FILE *from_file, alloc
 }
 
 /**
- * @brief
+ * @brief Releases resources taken by a dicelang program and zeroes it out.
  *
- * @param program
- * @param alloc
+ * @param[inout] program Program to release and invalidate.
+ * @param[in] alloc Allocator previously used to create the program.
  */
 void dicelang_program_destroy(struct dicelang_program *program, allocator alloc)
 {
@@ -104,10 +112,10 @@ void dicelang_program_destroy(struct dicelang_program *program, allocator alloc)
 }
 
 /**
- * @brief Prints one token to a file. The token may have a flavour that is non-terminal (is part of the dicelang_syntax_flavour enum).
+ * @brief Prints one token to a file. The token may have a flavour that is non-terminal.
  *
- * @param[in] token
- * @param[in] to_file
+ * @param[in] token Token to print information about.
+ * @param[in] to_file Target stream.
  */
 void dicelang_token_print(struct dicelang_token token, FILE *to_file)
 {
@@ -133,10 +141,10 @@ void dicelang_token_print(struct dicelang_token token, FILE *to_file)
 }
 
 /**
- * @brief
+ * @brief Prints the error held in an error data structure.
  *
- * @param err
- * @param to_file
+ * @param[in] err Error description and information.
+ * @param[in] to_file Target stream.
  */
 void dicelang_error_print(struct dicelang_error err, FILE *to_file)
 {
@@ -145,8 +153,9 @@ void dicelang_error_print(struct dicelang_error err, FILE *to_file)
             fprintf(to_file, "dicelang: no error\n");
             return;
         case DERR_INTERNAL:
-            fprintf(to_file, "dicelang: huh oh. Internal error: %s !\n", err.what);
-            return;
+            fprintf(to_file, "dicelang: huh oh. Internal error !\n");
+            fprintf(to_file, "dicelang: those errors are a sign the dev didn't do their job. If you can report it, that would be great.\n");
+            break;
         case DERR_TOKEN:
             fprintf(to_file, "dicelang: reading error\n");
             break;
@@ -161,6 +170,7 @@ void dicelang_error_print(struct dicelang_error err, FILE *to_file)
     fprintf(to_file, "at (%d:%d) near token '%s'",
             err.token.where.line, err.token.where.col,
             DTOK_DSTX_names[err.token.flavour]);
+
     if (err.token.value.source) {
         fprintf(to_file, " (\"");
         for (size_t i = 0 ; i < err.token.value.source_length ; i++) {

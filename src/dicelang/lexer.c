@@ -389,6 +389,6 @@ static struct dicelang_token dicelang_token_read(const char **text, u32 line, u3
         };
     }
 
-    // synatx error....
+    // syntax error....
     return (struct dicelang_token) { .flavour = DTOK_invalid, .where = { line, col } };
 }

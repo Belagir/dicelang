@@ -41,8 +41,9 @@ static void var_access    (RANGE_TOKEN *tokens, struct dicelang_parse_node *pare
 /**
  * @brief Constructs a tree of syntax nodes by consuming a set of tokens, and returns its root node.
  *
- * @param[inout] tokens
- * @param[in] alloc
+ * @param[inout] tokens Range of tokens describing a program. The range will be emptied but not deallocated.
+ * @param[inout] error Error sink that might be filled with some parsing error after the function return. Cannot be NULL !
+ * @param[in] alloc Allocator used to create the tree.
  *
  * @return struct dicelang_parse_node *
  */
@@ -76,8 +77,8 @@ struct dicelang_parse_node *dicelang_parse(RANGE_TOKEN *tokens, struct dicelang_
 /**
  * @brief Recursively prints a parse tree to some file.
  *
- * @param[in] node
- * @param[in] to_file
+ * @param[in] node Node to print from.
+ * @param[in] to_file Target stream.
  */
 void dicelang_parse_node_dump(const struct dicelang_parse_node *node, FILE *to_file)
 {
@@ -95,8 +96,8 @@ void dicelang_parse_node_dump(const struct dicelang_parse_node *node, FILE *to_f
 /**
  * @brief Recursively prints a parse tree to some file.
  *
- * @param[in] node
- * @param[in] to_file
+ * @param[in] node Node to print.
+ * @param[in] to_file Target stream.
  */
 void dicelang_parse_node_print(const struct dicelang_parse_node *node, FILE *to_file)
 {
@@ -111,8 +112,8 @@ void dicelang_parse_node_print(const struct dicelang_parse_node *node, FILE *to_
 /**
  * @brief Recursively destroys a parse tree, releasing the memory used by a node and all its children.
  *
- * @param[inout] node
- * @param[in] alloc
+ * @param[inout] node Node holding the memory to release.
+ * @param[in] alloc Allocator previously used to build the parse tree.
  */
 void dicelang_parse_node_destroy(struct dicelang_parse_node **node, struct allocator alloc)
 {

@@ -17,8 +17,7 @@
 
 /**
  * @brief Possible tokens that exist in the scripting language.
- *
- * @see parser.h tolookup what makes an "addition", "statement", "variable", "function", "mutator", or "array".
+ * Terminal tokens are prefixed as "DTOK_" (for dicelang token) and nonterminals are prefixed as "DSTX_" (for dicelang syntax).
  */
 enum dicelang_token_flavour {
     DTOK_invalid = 0,           ///< Lexer error token to indicate some unrecognized base syntax.
@@ -41,38 +40,38 @@ enum dicelang_token_flavour {
     DTOK_open_sq_bracket,       ///< Token to start either an array access or to start an array declaration.
     DTOK_close_sq_bracket,      ///< Token to finish either an array access or to finish an array declaration.
 
-    DSTX_program,
-    DSTX_statement,
-    DSTX_function_call,
-    DSTX_assignment,
-    DSTX_variable_access,
-    DSTX_addition,
-    DSTX_dice,
-    DSTX_multiplication,
-    DSTX_operand,
-    DSTX_expression_set,
+    DSTX_program,               ///< Root of a program made of statements.
+    DSTX_statement,             ///< Statement syntax, made of either a function call or an assignment.
+    DSTX_function_call,         ///< Call to some identifier, with eventual arguments.
+    DSTX_assignment,            ///< Variable declaration or modification.
+    DSTX_variable_access,       ///< Variable reference.
+    DSTX_addition,              ///< Sum of two expressions (addition or substraction)
+    DSTX_dice,                  ///< Dice expression.
+    DSTX_multiplication,        ///< Multiplication of two expressions.
+    DSTX_operand,               ///< basic operand : a value, a variable name, a dice expression or an expression between parenthesis.
+    DSTX_expression_set,        ///< Expressions separated by a specific character.
 
     DSTX_NUMBER,                ///< Meta enum member to have a count the number of other members.
 };
 
-#define DTOK_NUMBER (DSTX_program)
+#define DTOK_NUMBER (DSTX_program)      ///< Separation between terminal and nonterminal in the dicelang_token_flavour enum.
 
 /**
- * @brief
- *
+ * @brief Kinds of error the system can recognize.
  */
 enum dicelang_error_flavour {
-    DERR_NONE,
+    DERR_NONE,          ///< No error is reported.
 
-    DERR_INTERNAL,
+    DERR_INTERNAL,      ///< Internal error that if happens, means an implementation/integration-related bug has occured !
 
-    DERR_TOKEN,
-    DERR_SYNTAX,
-    DERR_INTERPRET,
+    DERR_TOKEN,         ///< There was some problem with a syntax token.
+    DERR_SYNTAX,        ///< There was some problem when composing a valid syntax with tokens.
+    DERR_INTERPRET,     ///< There was some problem when interpreting some otherwise valid syntax.
 };
 
 /**
- * @brief Dicelang token, dependent on some source code.
+ * @brief Dicelang token, dependent on some text source code.
+ * The characters pointed in the value::source field should have a longer or matching lifetime as tokens referencing them.
  */
 struct dicelang_token {
     /** Token nature. */
@@ -84,7 +83,7 @@ struct dicelang_token {
     struct { u32 line, col; } where;
 };
 
-/** Further range definition specificaly t store tokens. Defined so the compiler knows what it is working with. */
+/** Further range definition specificaly to store tokens. Defined so the compiler knows what it is working with. */
 typedef RANGE(struct dicelang_token) RANGE_TOKEN;
 
 /**
@@ -93,20 +92,25 @@ typedef RANGE(struct dicelang_token) RANGE_TOKEN;
  * if the syntax is a terminal one (a token), then the node shouldn't have children.
  */
 struct dicelang_parse_node {
+    /** Token (terminal or nonterminal) that generated the node, and leads how it will be interpreted. */
     struct dicelang_token token;
 
+    /** Eventual parent node ; might be NULL. */
     struct dicelang_parse_node *parent;
+    /** Eventual children nodes ; might be NULL, especially for terminal tokens. */
     RANGE(struct dicelang_parse_node *) *children;
 };
 
 /**
- * @brief
- *
+ * @brief Describes an error the system can report.
  */
 struct dicelang_error {
+    /** Kind of error reported. */
     enum dicelang_error_flavour flavour;
 
+    /** Token associated to the error ; might be empty. */
     struct dicelang_token token;
+    /** Optional description string ; might be NULL. Best associated to a static string. */
     const char *what;
 };
 
@@ -147,16 +151,16 @@ void dicelang_token_dump(RANGE_TOKEN *tokens, FILE *to_file);
 // Prints one token to a file.
 void dicelang_token_print(struct dicelang_token token, FILE *to_file);
 
-//
+// Create a parse tree from an array of tokens.
 struct dicelang_parse_node *dicelang_parse(RANGE_TOKEN *tokens, struct dicelang_error *error_sink, allocator alloc);
-//
+// Dumps the description of the whole tree of nodes to some file, depth-wise.
 void dicelang_parse_node_dump(const struct dicelang_parse_node *node, FILE *to_file);
-//
+// Prints a single parse tree node to a file.
 void dicelang_parse_node_print(const struct dicelang_parse_node *node, FILE *to_file);
-//
+// Destroys a parse node and all its children recursively.
 void dicelang_parse_node_destroy(struct dicelang_parse_node **node, struct allocator alloc);
 
-//
+// Interprets a parse tree to produce a the user can work with.
 void dicelang_interpret(struct dicelang_parse_node *tree, struct dicelang_error *error_sink, struct allocator alloc);
 
 // -------------------------------------------------------------------------------------------------

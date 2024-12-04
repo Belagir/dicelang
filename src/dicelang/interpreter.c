@@ -1,4 +1,13 @@
-
+/**
+ * @file interpreter.c
+ * @author gabriel ()
+ * @brief Main interpreter implentation file.
+ * @version 0.1
+ * @date 2024-12-04
+ *
+ * @copyright Copyright (c) 2024
+ *
+ */
 #include "containers/distribution.h"
 #include "containers/var_hashmap.h"
 #include "containers/func_hashmap.h"
@@ -84,24 +93,25 @@ static const dicelang_exec_routine dicelang_exec_routine_map[DSTX_NUMBER] = {
 // -------------------------------------------------------------------------------------------------
 
 /**
- * @brief
+ * @brief Interprets the instructions encoded in a parse tree.
+ * Most symbols in the tree are associated to a routine that will impact the interpreter's state.
  *
- * @param tree
- * @param error_sink
- * @param alloc
+ * @param[in] tree Interpreted tree.
+ * @param[inout] error_sink Error reporting structure.
+ * @param[in] alloc Allocator used for temporary allocations.
  */
 void dicelang_interpret(struct dicelang_parse_node *tree, struct dicelang_error *error_sink, struct allocator alloc)
 {
     struct dicelang_interpreter interpreter = { };
-    struct dicelang_exec_context *current_context = NULL;
-    struct dicelang_exec_context *next_context = NULL;
-    bool executing = 0;
+    struct dicelang_exec_context *current_context = nullptr;
+    struct dicelang_exec_context *next_context = nullptr;
+    bool executing = false;
 
-    (void) error_sink;
-
+    // interpreter and context
     interpreter = dicelang_interpreter_create(16, 8, alloc);
-
     current_context = dicelang_interpreter_push_context(&interpreter, tree, alloc);
+
+    // builtin functions addition
     dicelang_function_map_set(&interpreter.functions, "print", 5, &dicelang_builtin_print, 1, alloc);
 
     if (!current_context) {
@@ -110,13 +120,16 @@ void dicelang_interpret(struct dicelang_parse_node *tree, struct dicelang_error 
         return;
     }
 
-    executing = 1;
+    // reading the tree depth wise using the context stack
+    executing = true;
     do {
         if (current_context->children_index < current_context->node->children->length) {
+            // nonterminal
             next_context = dicelang_interpreter_push_context(&interpreter, current_context->node->children->data[current_context->children_index], alloc);
             current_context->children_index += 1;
             current_context = next_context;
         } else {
+            // terminal
             if (dicelang_exec_routine_map[current_context->node->token.flavour]) {
                 dicelang_exec_routine_map[current_context->node->token.flavour](&interpreter, current_context);
             }
@@ -124,9 +137,8 @@ void dicelang_interpret(struct dicelang_parse_node *tree, struct dicelang_error 
             current_context = dicelang_interpreter_pop_context(interpreter);
         }
 
-        executing = current_context != NULL;
+        executing = current_context != nullptr;
     } while (executing);
-
 
     dicelang_interpreter_destroy(&interpreter, alloc);
 }
@@ -193,7 +205,7 @@ static void dicelang_interpreter_destroy(struct dicelang_interpreter *interp, st
 static struct dicelang_exec_context *dicelang_interpreter_push_context(struct dicelang_interpreter *interp, struct dicelang_parse_node *node, struct allocator alloc)
 {
     if (!node || !interp) {
-        return NULL;
+        return nullptr;
     }
 
     interp->exec_stack = range_ensure_capacity(alloc, RANGE_TO_ANY(interp->exec_stack), 1);
@@ -213,7 +225,7 @@ static struct dicelang_exec_context *dicelang_interpreter_pop_context(struct dic
     range_pop(RANGE_TO_ANY(interp.exec_stack));
 
     if (interp.exec_stack->length == 0) {
-        return NULL;
+        return nullptr;
     }
     return interp.exec_stack->data + interp.exec_stack->length - 1;
 }
@@ -375,7 +387,7 @@ static void dicelang_exec_routine_function_call(struct dicelang_interpreter *int
             return;
         }
 
-        called.func_impl(interpreter->values_stack->data + context->values_stack_index, NULL, interpreter->alloc);
+        called.func_impl(interpreter->values_stack->data + context->values_stack_index, nullptr, interpreter->alloc);
     }
 }
 
