@@ -409,8 +409,30 @@ static void dicelang_builtin_print(struct dicelang_distrib *input, struct dicela
     (void) output;
     (void) alloc;
 
+    size_t sum = 0;
+    size_t max = 0;
+    f32 ratio = 0.f;
+    f32 relative_ratio = 0.f;
+
+    for (size_t i = 0 ; i < input->values->length ; i++) {
+        sum += input->values->data[i].count;
+
+        if (input->values->data[i].count > max) {
+            max = input->values->data[i].count;
+        }
+    }
+
     printf("%ld ---\n", input->values->length);
     for (size_t i = 0 ; i < input->values->length ; i++) {
-        printf("%d\t%d\n", input->values->data[i].val, input->values->data[i].count);
+        ratio = (f32) input->values->data[i].count / (f32) sum;
+        relative_ratio = (f32) input->values->data[i].count / (f32) max;
+
+        printf("% 4d\t%.3f ", input->values->data[i].val, ratio);
+
+        for (size_t j = 0 ; j < (size_t) (relative_ratio * 40.) ; j++) {
+            printf("|");
+        }
+
+        printf("\n");
     }
 }
