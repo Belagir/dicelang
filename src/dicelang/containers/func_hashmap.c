@@ -80,7 +80,7 @@ bool dicelang_function_map_get(struct dicelang_function_map map, const char *nam
  * @param alloc
  * @return
  */
-bool dicelang_function_map_set(struct dicelang_function_map *map, const char *name, size_t len_name, dicelang_script_func func, size_t nb_args, struct allocator alloc)
+bool dicelang_function_map_set(struct dicelang_function_map *map, const char *name, size_t len_name, dicelang_script_func func, size_t nb_args, bool returns_something, struct allocator alloc)
 {
     u32 hash = 0;
     size_t pos = 0;
@@ -96,7 +96,7 @@ bool dicelang_function_map_set(struct dicelang_function_map *map, const char *na
     }
 
     range_ensure_capacity(alloc, RANGE_TO_ANY(map->funcs), 1);
-    range_insert_value(RANGE_TO_ANY(map->funcs), pos, &(struct dicelang_function) { .hash = hash, .func_impl = func, .nb_args = nb_args });
+    range_insert_value(RANGE_TO_ANY(map->funcs), pos, &(struct dicelang_function) { .hash = hash, .func_impl = func, .nb_args = nb_args, .returns_value = returns_something });
 
     return true;
 }

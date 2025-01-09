@@ -9,7 +9,7 @@
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------
 
-typedef void (*dicelang_script_func)(struct dicelang_distrib *input, struct dicelang_distrib **output, struct allocator alloc);
+typedef void (*dicelang_script_func)(struct dicelang_distrib *input, struct dicelang_distrib *output, struct allocator alloc);
 
 /**
  * @brief
@@ -18,6 +18,7 @@ typedef void (*dicelang_script_func)(struct dicelang_distrib *input, struct dice
 struct dicelang_function {
     u32 hash;
 
+    bool returns_value;
     size_t nb_args;
     dicelang_script_func func_impl;
 };
@@ -37,6 +38,6 @@ struct dicelang_function_map dicelang_function_map_create(size_t size, struct al
 void dicelang_function_map_destroy(struct dicelang_function_map *map, struct allocator alloc);
 
 bool dicelang_function_map_get(struct dicelang_function_map map, const char *name, size_t len_name, struct dicelang_function *func);
-bool dicelang_function_map_set(struct dicelang_function_map *map, const char *name, size_t len_name, dicelang_script_func func, size_t nb_args, struct allocator alloc);
+bool dicelang_function_map_set(struct dicelang_function_map *map, const char *name, size_t len_name, dicelang_script_func func, size_t nb_args, bool returns_something, struct allocator alloc);
 
 #endif

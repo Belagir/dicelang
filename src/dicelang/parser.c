@@ -354,6 +354,9 @@ static void operand(RANGE_TOKEN *tokens, struct dicelang_parse_node *parent, str
 
     } else if (accept(tokens, DTOK_value, operand_node, alloc)) {
 
+    } else if (lookup(tokens, 0, DTOK_identifier) && lookup(tokens, 1, DTOK_open_parenthesis)) {
+        function_call(tokens, operand_node, error_sink, alloc);
+
     } else {
         var_access(tokens, operand_node, error_sink, alloc);
     }

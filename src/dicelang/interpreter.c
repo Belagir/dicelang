@@ -69,7 +69,8 @@ static void dicelang_exec_routine_variable_access(struct dicelang_interpreter *i
 
 // -------------------------------------------------------------------------------------------------
 
-static void dicelang_builtin_print(struct dicelang_distrib *input, struct dicelang_distrib **output, struct allocator alloc);
+static void dicelang_builtin_print(struct dicelang_distrib *input, struct dicelang_distrib *output, struct allocator alloc);
+static void dicelang_builtin_count(struct dicelang_distrib *input, struct dicelang_distrib *output, struct allocator alloc);
 
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------
@@ -112,7 +113,8 @@ void dicelang_interpret(struct dicelang_parse_node *tree, struct dicelang_error 
     current_context = dicelang_interpreter_push_context(&interpreter, tree, alloc);
 
     // builtin functions addition
-    dicelang_function_map_set(&interpreter.functions, "print", 5, &dicelang_builtin_print, 1, alloc);
+    dicelang_function_map_set(&interpreter.functions, "print", 5, &dicelang_builtin_print, 1, false, alloc);
+    dicelang_function_map_set(&interpreter.functions, "count", 5, &dicelang_builtin_count, 2, true, alloc);
 
     if (!current_context) {
         error_sink->flavour = DERR_INTERNAL;
@@ -374,6 +376,7 @@ static void dicelang_exec_routine_function_call(struct dicelang_interpreter *int
 {
     struct dicelang_token indentifier = { };
     struct dicelang_function called = { };
+    struct dicelang_distrib returned_value = { };
 
     if (context->node->children->length == 0) {
         return;
@@ -387,7 +390,13 @@ static void dicelang_exec_routine_function_call(struct dicelang_interpreter *int
             return;
         }
 
-        called.func_impl(interpreter->values_stack->data + context->values_stack_index, nullptr, interpreter->alloc);
+        if (called.returns_value) {
+            returned_value = dicelang_distrib_create_empty(interpreter->alloc);
+            called.func_impl(interpreter->values_stack->data + context->values_stack_index, &returned_value, interpreter->alloc);
+            range_push(RANGE_TO_ANY(interpreter->values_stack), &returned_value);
+        } else {
+            called.func_impl(interpreter->values_stack->data + context->values_stack_index, NULL, interpreter->alloc);
+        }
     }
 }
 
@@ -416,7 +425,7 @@ static void dicelang_exec_routine_variable_access(struct dicelang_interpreter *i
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------
 
-static void dicelang_builtin_print(struct dicelang_distrib *input, struct dicelang_distrib **output, struct allocator alloc)
+static void dicelang_builtin_print(struct dicelang_distrib *input, struct dicelang_distrib *output, struct allocator alloc)
 {
     (void) output;
     (void) alloc;
@@ -447,4 +456,12 @@ static void dicelang_builtin_print(struct dicelang_distrib *input, struct dicela
 
         printf("\n");
     }
+}
+
+static void dicelang_builtin_count(struct dicelang_distrib *input, struct dicelang_distrib *output, struct allocator alloc)
+{
+    (void) input;
+    (void) output;
+    (void) alloc;
+
 }

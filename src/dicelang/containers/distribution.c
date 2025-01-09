@@ -11,7 +11,6 @@
 static f32 dicelang_token_value(const char *bytes, size_t length);
 
 
-static struct dicelang_distrib dicelang_distrib_create_empty(struct allocator alloc);
 static void dicelang_distrib_push_value(struct dicelang_distrib *target, struct dicelang_entry value, struct allocator alloc);
 static void dicelang_distrib_push_distrib(struct dicelang_distrib *out_into, struct dicelang_distrib from, struct allocator alloc);
 
@@ -301,7 +300,7 @@ static f32 dicelang_token_value(const char *bytes, size_t length)
  * @param alloc
  * @return struct dicelang_distrib
  */
-static struct dicelang_distrib dicelang_distrib_create_empty(struct allocator alloc)
+struct dicelang_distrib dicelang_distrib_create_empty(struct allocator alloc)
 {
     struct dicelang_distrib new_distrib = { };
 
