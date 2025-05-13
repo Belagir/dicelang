@@ -7,7 +7,7 @@
 #include <dicelang.h>
 
 struct dicelang_entry { i32 val; u32 count; };
-struct dicelang_distrib { RANGE(struct dicelang_entry) *values; /* RANGE(const char *) *formula; */ };
+struct dicelang_distrib { RANGE(struct dicelang_entry) *values; RANGE(const char *) *formula; };
 
 struct dicelang_distrib dicelang_distrib_create(struct dicelang_token token, struct allocator alloc);
 struct dicelang_distrib dicelang_distrib_create_empty(struct allocator alloc);

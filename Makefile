@@ -14,7 +14,6 @@ INC_DIR = inc unstandard/inc
 ## Build diectory. Will contain object and binary files linked in the final
 ## executable
 OBJ_DIR = build
-OBJ_LIB_DIR = unstandard/build
 ## Executable directory. Contains the final binary file.
 EXC_DIR = bin
 
@@ -25,6 +24,7 @@ CFLAGS += -Wall -Wextra -Wpedantic -fanalyzer  -Werror
 CFLAGS += -Wno-error=unused-function
 CFLAGS += -g -std=c2x
 ## linker flags
+LFLAGS += -Lunstandard/bin -lunstandard
 LFLAGS += -lm
 
 # additional flags for defines
@@ -39,7 +39,7 @@ SRC := $(notdir $(shell find $(SRC_DIR) -name *.c))
 ## list of all duplicate c files to enforce uniqueness of filenames
 DUPL_SRC := $(strip $(shell echo $(SRC) | tr ' ' '\n' | sort | uniq -d))
 ## list of all target object files with their path
-OBJ := $(addprefix $(OBJ_DIR)/, $(patsubst %.c, %.o, $(SRC))) $(shell find $(OBJ_LIB_DIR)/ -name *.o)
+OBJ := $(addprefix $(OBJ_DIR)/, $(patsubst %.c, %.o, $(SRC)))
 
 ## makefile-managed directories
 BUILD_DIRS = $(EXC_DIR) $(OBJ_DIR)
